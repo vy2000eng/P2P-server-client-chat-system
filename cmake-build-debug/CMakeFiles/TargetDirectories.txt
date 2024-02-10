@@ -1,0 +1,11 @@
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/cmake-build-debug/client/CMakeFiles/cli.dir
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/cmake-build-debug/client/CMakeFiles/edit_cache.dir
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/cmake-build-debug/client/CMakeFiles/rebuild_cache.dir
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/cmake-build-debug/server/CMakeFiles/ser.dir
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/cmake-build-debug/server/CMakeFiles/edit_cache.dir
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/cmake-build-debug/server/CMakeFiles/rebuild_cache.dir
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/cmake-build-debug/shared/CMakeFiles/utils.dir
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/cmake-build-debug/shared/CMakeFiles/edit_cache.dir
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/cmake-build-debug/shared/CMakeFiles/rebuild_cache.dir

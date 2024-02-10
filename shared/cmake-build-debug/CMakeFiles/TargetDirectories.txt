@@ -1,0 +1,3 @@
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/shared/cmake-build-debug/CMakeFiles/utils.dir
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/shared/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/voldemort/CLionProjects/multithreaded_client_server_chat/shared/cmake-build-debug/CMakeFiles/rebuild_cache.dir
