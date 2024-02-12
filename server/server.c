@@ -3,14 +3,15 @@
 
 int run_server()
 {
-    struct      addrinfo        hints;
-    struct      addrinfo        *res;
-    struct      sockaddr_storage their_address;
-    int         gai_return;
-    int         listening_socket;
-    int         socket_client;
-    int         enable;
-    socklen_t   addr_size;
+    struct              sockaddr_storage their_address;
+    struct              addrinfo         hints;
+    struct              addrinfo         *res;
+    socklen_t           addr_size;
+    client_info_packet  client_info_packet_incoming;
+    int                 gai_return;
+    int                 listening_socket;
+    int                 socket_client;
+    int                 enable;
 
     memset(&hints, 0,sizeof hints);
     hints.ai_family     =  AF_UNSPEC;
@@ -62,6 +63,7 @@ int run_server()
        if(socket_client < 0){break;};
        char  client_connected_string [18]= "client connected.\n";
        send(socket_client, client_connected_string, sizeof (client_connected_string), 0);
+       receive_packet(socket_client, &client_info_packet_incoming);//getting the connected client information i.e. username,port,ip
        close(socket_client);
     }
     return 1;
