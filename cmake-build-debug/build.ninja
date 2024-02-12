@@ -95,6 +95,12 @@ build client/CMakeFiles/cli.dir/__/shared/utils.c.o: C_COMPILER__cli_unscanned_D
   OBJECT_DIR = client/CMakeFiles/cli.dir
   OBJECT_FILE_DIR = client/CMakeFiles/cli.dir/__/shared
 
+build client/CMakeFiles/cli.dir/greeting.c.o: C_COMPILER__cli_unscanned_Debug /home/voldemort/CLionProjects/multithreaded_client_server_chat/client/greeting.c || cmake_object_order_depends_target_cli
+  DEP_FILE = client/CMakeFiles/cli.dir/greeting.c.o.d
+  FLAGS = -g -std=gnu11 -fdiagnostics-color=always
+  OBJECT_DIR = client/CMakeFiles/cli.dir
+  OBJECT_FILE_DIR = client/CMakeFiles/cli.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target cli
@@ -103,7 +109,7 @@ build client/CMakeFiles/cli.dir/__/shared/utils.c.o: C_COMPILER__cli_unscanned_D
 #############################################
 # Link the executable client/cli
 
-build client/cli: C_EXECUTABLE_LINKER__cli_Debug client/CMakeFiles/cli.dir/main.c.o client/CMakeFiles/cli.dir/client.c.o client/CMakeFiles/cli.dir/__/shared/utils.c.o
+build client/cli: C_EXECUTABLE_LINKER__cli_Debug client/CMakeFiles/cli.dir/main.c.o client/CMakeFiles/cli.dir/client.c.o client/CMakeFiles/cli.dir/__/shared/utils.c.o client/CMakeFiles/cli.dir/greeting.c.o
   FLAGS = -g
   OBJECT_DIR = client/CMakeFiles/cli.dir
   POST_BUILD = :
