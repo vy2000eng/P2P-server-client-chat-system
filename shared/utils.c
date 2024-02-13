@@ -36,15 +36,15 @@ void receive_packet(int socket_client, void * buf){
             n_read(socket_client, data_length, ccpacket->connected_clients);
         }
             break;
-        case type_socket_fd_packet:
-        {
-            s_fd_packet            *      sfd_packet;
-            sfd_packet             =      (s_fd_packet *) buf;
-            sfd_packet->packet_type =      header;
-            n_read(socket_client, data_length, &(sfd_packet->recipient));
-            sfd_packet->recipient  = ntohl(sfd_packet->recipient);
-        }
-            break;
+//        case type_socket_fd_packet:
+//        {
+//            s_fd_packet            *      sfd_packet;
+//            sfd_packet             =      (s_fd_packet *) buf;
+//            sfd_packet->packet_type =      header;
+//            n_read(socket_client, data_length, &(sfd_packet->recipient));
+//            sfd_packet->recipient  = ntohl(sfd_packet->recipient);
+//        }
+//            break;
         case type_client_info_packet:
         {
             ssize_t                                   remaining_length;

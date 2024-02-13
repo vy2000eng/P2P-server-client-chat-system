@@ -4,10 +4,16 @@ int connect_to_server(int argc, char ** argv){
     printf("printing args\n");
     printf("%s\n", argv[2]);
 
-    struct      addrinfo        hints;
-    struct      addrinfo        *res;
-    int         gai_return;
-    int         server_socket;
+
+    //client_info_packet client_info_packet_outgoing;
+    username_packet    username_packet_outgoing;
+    char               username_buffer[256];
+    char               buf[18];
+    struct             addrinfo hints;
+    struct             addrinfo *res;
+    int                gai_return;
+    int                server_socket;
+
 
     memset(&hints, 0,sizeof hints);
     hints.ai_family     =  AF_UNSPEC;
@@ -32,11 +38,15 @@ int connect_to_server(int argc, char ** argv){
         printf("bind() failed.\n");
     }
     freeaddrinfo(res);
-
-
-    char buf[18];
+    // just confirming connection
     recv(server_socket,buf, sizeof buf, 0);
     printf("%s", buf);
+
+    printf("Enter Username: ");
+    memset(&username_packet_outgoing, 0, sizeof (username_packet_outgoing));
+    username_packet_outgoing.packet_type.type = type_client_info_packet;
+    fgets(username_buffer, sizeof (username_packet_outgoing.user_name), stdin);
+    send_packet(server_socket, &username_packet_outgoing);
     close(server_socket);
 
     return 0;

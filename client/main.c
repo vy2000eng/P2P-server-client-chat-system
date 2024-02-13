@@ -4,7 +4,6 @@
 
 int main(int argc, char*argv[]){
 //  intro();
-    char username_buffer[256];
 
     if(argc < 3)
     {
@@ -12,8 +11,7 @@ int main(int argc, char*argv[]){
         return 1;
     }
     connect_to_server(argc, argv);
-    printf("Enter Username: ");
-    fgets(username_buffer, sizeof (username_buffer), stdin);
+
 
 
 
