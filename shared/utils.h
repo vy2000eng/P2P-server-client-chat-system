@@ -30,7 +30,7 @@ typedef struct base_packet
     packet_type type;
 }base_packet;
 
-typedef struct
+typedef struct username_packet
 {
     base_packet packet_type;
     char        user_name[256];
@@ -50,11 +50,13 @@ typedef struct message_packet
 } message_packet;
 
 typedef  struct client_info_packet {
-    base_packet             packet_type;
-    SOCKET                  socket_file_descriptor;// TODO: this needs to be fixed, because it's being set only after the client sends it, not before.
-    struct sockaddr_in      client_ip_port;
-    char                    username [256];
-} __attribute__((packed)) client_info_packet;
+    base_packet packet_type;
+  //  SOCKET      socket_file_descriptor;// TODO: this needs to be fixed, because it's being set only after the client sends it, not before.
+    int         port;
+    char        client_ip_port [INET_ADDRSTRLEN];
+    char        username       [256];
+}  __attribute__((packed)) client_info_packet;
+
 
 void   receive_packet  (int socket_client, void *buf);
 void   send_packet     (int socket_client, void *buf);
