@@ -124,3 +124,33 @@ int connect_to_main_server(int argc, char ** argv, client_info_packet * clientIn
 
     return 0;
 }
+
+//initializes the strings inside of thread_args that are passed in via command line args
+int init_thread_args(thread_args * _thread_args,int argc, char ** argv){
+    size_t len_of_argv_1;
+    size_t len_of_argv_2;
+    len_of_argv_1      = strlen(argv[1]);
+    len_of_argv_2      = strlen(argv[2]);
+    printf("printing args\n");
+    //printf("ip: %s", argv[1]);
+    printf("ip: %s port: %s\n",argv[1], argv[2]);
+
+    // you need to free ip and port before you free _thread args, or else you'll have a memory leak
+    _thread_args       = malloc(sizeof(thread_args));
+    if(_thread_args    == NULL){ printf("Failed to allocate memory.\n"); return 1;}
+    _thread_args->ip   = (char *) malloc(len_of_argv_1+1);
+    _thread_args->port = (char *) malloc(len_of_argv_2+1);
+
+    if(_thread_args->ip   == NULL ||
+       _thread_args->port == NULL) { printf("Failed to allocate memory.\n"); return 1;};
+
+    _thread_args->clientInfoPacket.packet_type.type = type_client_info_packet;
+    strcpy(_thread_args->ip,argv[1]);
+    strcpy(_thread_args->port,argv[2]);
+
+    return 0;
+
+
+
+
+}

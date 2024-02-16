@@ -29,7 +29,12 @@
  */
 typedef struct thread_args{
     client_info_packet clientInfoPacket;
+    char * ip;
+    char * port;
+
 }thread_args;
+
+int init_thread_args(thread_args * _thread_args,int argc, char ** argv);
 
 void * run_client_server   (void * arg);
 int connect_to_main_server (int argc, char ** argv, client_info_packet * clientInfoPacket);
