@@ -20,17 +20,17 @@ typedef enum
     type_username_packet,
     type_connected_clients_packet,
     type_message_packet,
-    type_socket_fd_packet,
+   // type_socket_fd_packet,
     type_client_info_packet
 } packet_type;
 
-typedef struct
+typedef struct base_packet
 {
     ssize_t     length;
     packet_type type;
 }base_packet;
 
-typedef struct
+typedef struct username_packet
 {
     base_packet packet_type;
     char        user_name[256];
@@ -42,7 +42,7 @@ typedef struct
     char        connected_clients[4096];
 } connected_clients_packet;
 
-typedef struct
+typedef struct message_packet
 {
     base_packet packet_type;
     int         recipient_socket;
@@ -50,13 +50,13 @@ typedef struct
 } message_packet;
 
 typedef  struct client_info_packet {
-    base_packet             packet_type;
-    bool                    initiating_chat;
-    int                     listening_port;
-    SOCKET                  socket_file_descriptor;// TODO: this needs to be fixed, because it's being set only after the client sends it, not before.
-    char                    username [256];
-    struct sockaddr_storage client_ip;
-} __attribute__((packed)) client_info_packet;
+    base_packet packet_type;
+  //  SOCKET      socket_file_descriptor;// TODO: this needs to be fixed, because it's being set only after the client sends it, not before.
+    int         port;
+    char        client_ip_port [INET_ADDRSTRLEN];
+    char        username       [256];
+}  __attribute__((packed)) client_info_packet;
+
 
 void   receive_packet  (int socket_client, void *buf);
 void   send_packet     (int socket_client, void *buf);

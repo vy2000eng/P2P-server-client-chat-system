@@ -16,7 +16,18 @@
 
 
 
+typedef struct client_arr{
+    // client      clients [128];
+    client_info_packet client[128];
+    int                size;
+}clients_arr;
+void init_array(clients_arr *clientsArr);
+
+void print_client_info(client_info_packet *clientInfoPacket);
+
 int run_server();
+
+bool insert_client(client_info_packet * clientInfoPacket,clients_arr *clientsArr);
 
 
 
