@@ -5,9 +5,7 @@
 #include "client.h"
 #include "greeting.h"
 
-typedef struct thread_args{
-    client_info_packet clientInfoPacket;
-}thread_args;
+
 
 
 

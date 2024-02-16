@@ -27,8 +27,11 @@
  *          This is so that other clients can request it and use that information to connect to it later.
  *
  */
+typedef struct thread_args{
+    client_info_packet clientInfoPacket;
+}thread_args;
 
-int run_client_server      (client_info_packet * clientInfoPacket);
+void * run_client_server   (void * arg);
 int connect_to_main_server (int argc, char ** argv, client_info_packet * clientInfoPacket);
 
 

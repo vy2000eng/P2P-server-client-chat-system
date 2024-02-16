@@ -19,13 +19,12 @@ int main(int argc, char*argv[]){
     trd_args = malloc(sizeof (thread_args));
     memset(trd_args, 0 , sizeof (thread_args));
     trd_args->clientInfoPacket.packet_type.type = type_client_info_packet;
-    trd_args->clientInfoPacket.port             = 10;
-    memcpy(trd_args->clientInfoPacket.client_ip_port,"127.0.0.1", 16);
 
-   // pthread_create(client_server_thread, NULL, ,trd_args )
+   pthread_create(&client_server_thread, NULL, run_client_server,trd_args );
+   pthread_join(client_server_thread, NULL);
 
     free(trd_args);
-    run_client_server(&client_info_packet_outgoing);//these will be threads
+    //run_client_server(&client_info_packet_outgoing);//these will be threads
     connect_to_main_server(argc, argv,&client_info_packet_outgoing);
 
 

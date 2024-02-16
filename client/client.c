@@ -3,10 +3,11 @@
 
 
 // listening on port 3049
-int run_client_server(client_info_packet * clientInfoPacket){
+void * run_client_server(void * arg){
     struct addrinfo hints;
     struct addrinfo *res;
     struct sockaddr their_addr;
+    thread_args     *_thread_args;
     int             gai;
     int             listening_socket;
     int             socket_client;
@@ -14,16 +15,20 @@ int run_client_server(client_info_packet * clientInfoPacket){
     int             addr_len;
     int             gai_return;
 
+
     memset            (&hints,0 ,sizeof hints);
     hints.ai_family   = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags    = AI_PASSIVE;
+    _thread_args      = (thread_args*)arg;
+
+
     gai_return        = getaddrinfo(NULL, PORT, &hints, &res);
     enable            = 1;
     if(gai_return != 0){
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(gai_return));
         freeaddrinfo(res);
-        return 0;
+        //return 0;
     }
 
     listening_socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -32,20 +37,20 @@ int run_client_server(client_info_packet * clientInfoPacket){
     {
         printf("socket() failed.\n");
         freeaddrinfo(res);
-        return 0;
+        //return 0;
     }
 
     if (setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
         perror("setsockopt(SO_REUSEADDR) failed");
         freeaddrinfo(res);
-        return 0;
+        //return 0;
     }
 
     if(bind(listening_socket, res->ai_addr, res->ai_addrlen) == -1)
     {
         perror("bind() failed");
         freeaddrinfo(res);
-        return 0;
+       // return 0;
     }
 
     freeaddrinfo(res);
@@ -56,8 +61,9 @@ int run_client_server(client_info_packet * clientInfoPacket){
     char ip[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &((struct sockaddr_in *)&res)->sin_addr, ip, res->ai_addrlen);
     int my_port             = ntohs(((struct sockaddr_in *)(res)->ai_addr)->sin_port);
-    clientInfoPacket->port  = my_port;
-    memcpy(clientInfoPacket->client_ip_port,ip, sizeof ip);
+    _thread_args->clientInfoPacket.port = my_port;
+    // clientInfoPacket->port  = my_port;
+    memcpy(_thread_args->clientInfoPacket.client_ip_port,ip, sizeof ip);
 
     //int port = ntohs((struct sockaddr_in*)res))
     printf("listening on: %s %d", ip, my_port);
@@ -67,7 +73,7 @@ int run_client_server(client_info_packet * clientInfoPacket){
         char client_connected_string[29] = "client connected to client.\n";
         send(socket_client, client_connected_string, sizeof(client_connected_string), 0);
     }
-    return 1;
+    //return 1;
 }
 
 int connect_to_main_server(int argc, char ** argv, client_info_packet * clientInfoPacket){
