@@ -15,21 +15,19 @@ int main(int argc, char*argv[]) {
         fprintf(stderr, "usage: tcp_client hostname port\n");
         return 1;
     }
-    //connect_to_main_server(argc, argv,&client_info_packet_outgoing);
-
 
     init_thread_args(trd_args, argc, argv);
-//    trd_args = malloc(sizeof(thread_args));
-//    memset(trd_args, 0, sizeof(thread_args));
-//    trd_args->clientInfoPacket.packet_type.type = type_client_info_packet;
 
-    pthread_create(&client_server_thread, NULL, run_client_server, trd_args);
-  //  pthread_create(&main_server_thread, NULL, connect_to_main_server, trd_args);
+    pthread_create(&client_server_thread, NULL,run_client_server,trd_args);
+    pthread_create(&main_server_thread, NULL,connect_to_main_server,trd_args);
     pthread_join(client_server_thread, NULL);
+    pthread_join(main_server_thread, NULL);
 
+
+    free(trd_args->ip);
+    free(trd_args->port);
     free(trd_args);
-    //run_client_server(&client_info_packet_outgoing);//these will be threads
-    //connect_to_main_server(argc, argv,&client_info_packet_outgoing);
+
 
 
 

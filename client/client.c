@@ -76,10 +76,11 @@ void * run_client_server(void * arg){
     //return 1;
 }
 
-int connect_to_main_server(int argc, char ** argv, client_info_packet * clientInfoPacket){
-    printf("printing args\n");
-    printf("%s\n", argv[2]);
+void *  connect_to_main_server(void * arg){
+//    printf("printing args\n");
+//    printf("%s\n", argv[2]);
     username_packet    username_packet_outgoing;
+    thread_args      * _thread_args;
     char               username_buffer[256];
     char               buf[18];
     struct             addrinfo hints;
@@ -91,7 +92,9 @@ int connect_to_main_server(int argc, char ** argv, client_info_packet * clientIn
     memset(&hints, 0,sizeof hints);
     hints.ai_family     =  AF_UNSPEC;
     hints.ai_socktype   =  SOCK_STREAM;
-    gai_return          =  getaddrinfo(argv[1],argv[2], &hints, &res);
+    _thread_args        = (thread_args*)arg;
+
+    gai_return          =  getaddrinfo(_thread_args->ip,_thread_args->port, &hints, &res);
 
     if(gai_return != 0)
     {
