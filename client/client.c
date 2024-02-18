@@ -149,7 +149,8 @@ void *  connect_to_main_server(void * arg){
 
     printf("Enter Username: ");
 
-    _thread_args->client_info_packet_outgoing.packet_type.type = type_client_info_packet;
+    _thread_args->client_info_packet_outgoing.packet_type.type   = type_client_info_packet;
+    _thread_args->client_info_packet_outgoing.packet_type.length = sizeof (client_info_packet);
     fgets       (  _thread_args->client_info_packet_outgoing.username, sizeof (_thread_args->client_info_packet_outgoing.username), stdin);
     printf("packet ready");
     // send_packet (server_socket, &client_info_packet_outgoing);
