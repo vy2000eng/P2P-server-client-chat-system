@@ -153,7 +153,7 @@ void *  connect_to_main_server(void * arg){
     _thread_args->client_info_packet_outgoing.packet_type.length = sizeof (client_info_packet);
     fgets       (  _thread_args->client_info_packet_outgoing.username, sizeof (_thread_args->client_info_packet_outgoing.username), stdin);
     printf("packet ready");
-    // send_packet (server_socket, &client_info_packet_outgoing);
+    send_packet (server_socket, &_thread_args->client_info_packet_outgoing);
     close       (server_socket);
 
     return 0;

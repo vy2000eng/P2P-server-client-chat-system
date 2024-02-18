@@ -19,7 +19,7 @@ bool insert_client(client_info_packet * clientInfoPacket,clients_arr *clientsArr
 }
 
 void print_client_info(client_info_packet * clientInfoPacket){
-    printf("client username: %s\n", clientInfoPacket->username );
+    printf("client username: %s", clientInfoPacket->username );
     printf("client ip: %s\n", clientInfoPacket->client_ip_port);
     printf("client port: %d\n", clientInfoPacket->port);
 //    char ip[INET_ADDRSTRLEN];
