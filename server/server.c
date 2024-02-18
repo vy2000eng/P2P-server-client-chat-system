@@ -19,11 +19,14 @@ bool insert_client(client_info_packet * clientInfoPacket,clients_arr *clientsArr
 }
 
 void print_client_info(client_info_packet * clientInfoPacket){
-    char ip[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET,&(*clientInfoPacket).client_ip_port.sin_addr, ip, INET_ADDRSTRLEN );
-    int port = ntohs((clientInfoPacket->client_ip_port.sin_port));
-    printf("client_ip: %s\n", ip);
-    printf("client_port: %d", port);
+    printf("client username: %s\n", clientInfoPacket->username );
+    printf("client ip: %s\n", clientInfoPacket->client_ip_port);
+    printf("client port: %d\n", clientInfoPacket->port);
+//    char ip[INET_ADDRSTRLEN];
+//    inet_ntop(AF_INET,&(*clientInfoPacket).client_ip_port.sin_addr, ip, INET_ADDRSTRLEN );
+//    int port = ntohs((clientInfoPacket->client_ip_port.sin_port));
+//    printf("client_ip: %s\n", ip);
+//    printf("client_port: %d", port);
 
 
 }
@@ -92,11 +95,12 @@ int run_server()
        // if (socket_client < 0) { break; };
         char client_connected_string[18] = "client connected.\n";
         send(socket_client, client_connected_string, sizeof(client_connected_string), 0);
-        receive_packet(socket_client,&username_packet_incoming);//getting the connected client information i.e. username,port,ip
         client_info_packet_incoming.packet_type.type        = type_client_info_packet;
-        client_info_packet_incoming.socket_file_descriptor  = socket_client;
-        client_info_packet_incoming.client_ip_port          = their_address;
-        memcpy(client_info_packet_incoming.username, username_packet_incoming.user_name, sizeof(username_packet_incoming.user_name));
+        receive_packet(socket_client,&client_info_packet_incoming);//getting the connected client information i.e. username,port,ip
+
+//        client_info_packet_incoming.socket_file_descriptor  = socket_client;
+//        client_info_packet_incoming.client_ip_port          = their_address;
+//        memcpy(client_info_packet_incoming.username, username_packet_incoming.user_name, sizeof(username_packet_incoming.user_name));
 
         print_client_info(&client_info_packet_incoming);
 
