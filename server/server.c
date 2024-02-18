@@ -22,13 +22,6 @@ void print_client_info(client_info_packet * clientInfoPacket){
     printf("client username: %s", clientInfoPacket->username );
     printf("client ip: %s\n", clientInfoPacket->client_ip_port);
     printf("client port: %d\n", clientInfoPacket->port);
-//    char ip[INET_ADDRSTRLEN];
-//    inet_ntop(AF_INET,&(*clientInfoPacket).client_ip_port.sin_addr, ip, INET_ADDRSTRLEN );
-//    int port = ntohs((clientInfoPacket->client_ip_port.sin_port));
-//    printf("client_ip: %s\n", ip);
-//    printf("client_port: %d", port);
-
-
 }
 
 int run_server()
