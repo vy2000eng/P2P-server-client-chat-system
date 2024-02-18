@@ -17,6 +17,7 @@ int main(int argc, char*argv[]) {
         return 1;
     }
     sem_init(&packet_semaphore, 0,0);
+    mtx_init(&thread_args_mutex, mtx_plain);
     init_thread_args(&trd_args, argc, argv);
 
     pthread_create(&client_server_thread, NULL,run_client_server,trd_args);

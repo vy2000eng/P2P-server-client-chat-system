@@ -15,15 +15,17 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <limits.h> // For INT_MAX and INT_MIN
+#include <threads.h>
 #include "semaphore.h"
 
 extern sem_t packet_semaphore;
+extern mtx_t thread_args_mutex;
 
 typedef struct thread_args{
-    char * username;
     char * ip;
     char * port;
-    client_info_packet clientInfoPacket;
+    client_info_packet client_info_packet_outgoing;
 }thread_args;
 
 //initializes the strings inside of thread_args that are passed in via command line args
@@ -41,6 +43,8 @@ void * run_client_server   (void * arg);
 void * connect_to_main_server (void * arg);
 
 int allocate_memory_for_username(char * destination, char * src );
+
+int char_to_int(char * string);
 
 
 
