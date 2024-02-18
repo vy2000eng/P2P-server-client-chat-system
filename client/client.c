@@ -3,7 +3,7 @@
 
 sem_t packet_semaphore;
 
-int init_thread_args(thread_args * _thread_args,int argc, char ** argv){
+int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
     size_t len_of_argv_1;
     size_t len_of_argv_2;
     len_of_argv_1      = strlen(argv[1]);
@@ -13,17 +13,17 @@ int init_thread_args(thread_args * _thread_args,int argc, char ** argv){
     printf("ip: %s port: %s\n",argv[1], argv[2]);
 
     // you need to free ip and port before you free _thread args, or else you'll have a memory leak
-    _thread_args       = malloc(sizeof(thread_args));
-    if(_thread_args    == NULL){ printf("Failed to allocate memory.\n"); return 1;}
-    _thread_args->ip   = (char *) malloc(len_of_argv_1+1);
-    _thread_args->port = (char *) malloc(len_of_argv_2+1);
+    *_thread_args       = malloc(sizeof(thread_args));
+    if(*_thread_args    == NULL){ printf("Failed to allocate memory.\n"); return 1;}
+    (*_thread_args)-> ip   = (char *) malloc(len_of_argv_1+1);
+    (*_thread_args)->port = (char *) malloc(len_of_argv_2+1);
 
-    if(_thread_args->ip   == NULL ||
-       _thread_args->port == NULL) { printf("Failed to allocate memory.\n"); return 1;};
+    if((*_thread_args)->ip   == NULL ||
+            (*_thread_args)->port == NULL) { printf("Failed to allocate memory.\n"); return 1;};
 
-    _thread_args->clientInfoPacket.packet_type.type = type_client_info_packet;
-    strcpy(_thread_args->ip,argv[1]);
-    strcpy(_thread_args->port,argv[2]);
+    (*_thread_args)->clientInfoPacket.packet_type.type = type_client_info_packet;
+    strcpy((*_thread_args)->ip,argv[1]);
+    strcpy((*_thread_args)->port,argv[2]);
 
     return 0;
 }
@@ -92,6 +92,7 @@ void * run_client_server(void * arg){
     _thread_args->clientInfoPacket.port = my_port;
     memcpy(_thread_args->clientInfoPacket.client_ip_port,ip, sizeof ip);
 
+    sem_post(&packet_semaphore);
     //int port = ntohs((struct sockaddr_in*)res))
     printf("listening on: %s %d", ip, my_port);
     while(1){
@@ -115,11 +116,11 @@ void *  connect_to_main_server(void * arg){
     int                gai_return;
     int                server_socket;
     size_t             length_of_username;
-
-
     memset(&hints, 0,sizeof hints);
     hints.ai_family     =  AF_UNSPEC;
     hints.ai_socktype   =  SOCK_STREAM;
+
+    sem_wait(&packet_semaphore);
     _thread_args        = (thread_args*)arg;
 
     gai_return          =  getaddrinfo(_thread_args->ip,_thread_args->port, &hints, &res);
@@ -148,13 +149,25 @@ void *  connect_to_main_server(void * arg){
 
     printf("Enter Username: ");
 
-    fgets(username_buffer, sizeof (username_packet_outgoing.user_name), stdin);
-    length_of_username = sizeof  username_buffer;
+    fgets(_thread_args->clientInfoPacket.username, sizeof (_thread_args->clientInfoPacket.username), stdin);
 
-    send_packet(server_socket, &username_packet_outgoing);
+    send_packet(server_socket, &_thread_args->clientInfoPacket);
     close(server_socket);
 
     return 0;
 }
+
+
+int allocate_memory_for_username(char * destination, char * src ){
+
+
+
+
+
+
+
+    return 0;
+}
+
 
 

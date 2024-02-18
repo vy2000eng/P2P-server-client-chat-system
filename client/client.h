@@ -27,7 +27,7 @@ typedef struct thread_args{
 }thread_args;
 
 //initializes the strings inside of thread_args that are passed in via command line args
-int    init_thread_args(thread_args * _thread_args,int argc, char ** argv);
+int    init_thread_args(thread_args ** _thread_args,int argc, char ** argv);
 
 void * run_client_server   (void * arg);
 
@@ -39,6 +39,8 @@ void * run_client_server   (void * arg);
  *          This is so that other clients can request it and use that information to connect to it later.
  */
 void * connect_to_main_server (void * arg);
+
+int allocate_memory_for_username(char * destination, char * src );
 
 
 

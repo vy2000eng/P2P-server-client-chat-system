@@ -17,12 +17,12 @@ int main(int argc, char*argv[]) {
         return 1;
     }
     sem_init(&packet_semaphore, 0,0);
-    init_thread_args(trd_args, argc, argv);
+    init_thread_args(&trd_args, argc, argv);
 
     pthread_create(&client_server_thread, NULL,run_client_server,trd_args);
     pthread_create(&main_server_thread, NULL,connect_to_main_server,trd_args);
 
-    pthread_join(client_server_thread,NULL);
+ //   pthread_join(client_server_thread,NULL);
     pthread_join(main_server_thread,NULL);
 
 
