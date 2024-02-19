@@ -22,6 +22,33 @@ bool insert_client(client_info_packet * clientInfoPacket,clients_arr *clientsArr
     }
 
 }
+int init_thread_args(server_thread_args ** s_trd_args,clients_arr * connected_clients_arr, int socket_client ){
+    *s_trd_args = malloc(sizeof (server_thread_args));
+    if(*s_trd_args == NULL){ printf("Failed to allocate memory.\n"); return 1;}
+    (*s_trd_args)->socket                = socket_client;
+    (*s_trd_args)->connected_clients_arr = connected_clients_arr;
+    return 0;
+
+
+}
+
+
+void * connected_client_thread(void * arg){
+    server_thread_args *s_trd_args;
+    s_trd_args = (server_thread_args*)arg;
+
+    client_info_packet client_info_packet_incoming;
+    char client_connected_string[18] = "client connected.\n";
+    send(s_trd_args->socket, client_connected_string, sizeof(client_connected_string), 0);
+    client_info_packet_incoming.packet_type.type        = type_client_info_packet;
+    receive_packet(s_trd_args->socket,&client_info_packet_incoming);//getting the connected client information i.e. username,port,ip
+    print_client_info(&client_info_packet_incoming);
+    insert_client(&client_info_packet_incoming, s_trd_args->connected_clients_arr);
+    close(s_trd_args->socket);
+    free(s_trd_args);
+    return NULL;
+}
+
 
 void print_client_info(client_info_packet * clientInfoPacket){
     printf("client username: %s", clientInfoPacket->username );
@@ -32,9 +59,9 @@ void print_client_info(client_info_packet * clientInfoPacket){
 int run_server()
 {
     //packets
-    clients_arr         clients_arr;//eventually, this will be an sqllite db
-    username_packet     username_packet_incoming;
-    client_info_packet  client_info_packet_incoming;
+    clients_arr          clients_arr;//eventually, this will be an sqllite db
+    username_packet      username_packet_incoming;
+    client_info_packet   client_info_packet_incoming;
 
     struct              sockaddr_in their_address;
     struct              addrinfo         hints;
@@ -88,26 +115,32 @@ int run_server()
     }
 
     printf("...listening...\n");
-   // while(1) {
-        socket_client = accept(listening_socket, (struct sockaddr *) &their_address, (socklen_t *) &addr_len);
-       // if (socket_client < 0) { break; };
-        char client_connected_string[18] = "client connected.\n";
-        send(socket_client, client_connected_string, sizeof(client_connected_string), 0);
-        client_info_packet_incoming.packet_type.type        = type_client_info_packet;
-        receive_packet(socket_client,&client_info_packet_incoming);//getting the connected client information i.e. username,port,ip
-    insert_client(&client_info_packet_incoming, &clients_arr);
+   while(1) {
+       server_thread_args * s_trd_args = NULL;
+       socket_client = accept(listening_socket, (struct sockaddr *) &their_address, (socklen_t *) &addr_len);
+       if (socket_client < 0) { break; };
+       init_thread_args(&s_trd_args, &clients_arr, socket_client);
+       thread_t client_thread;
+       pthread_create(&client_thread, NULL, connected_client_thread, s_trd_args);
+       pthread_detach(client_thread);
+//        char client_connected_string[18] = "client connected.\n";
+//        send(socket_client, client_connected_string, sizeof(client_connected_string), 0);
+//        client_info_packet_incoming.packet_type.type        = type_client_info_packet;
+//        receive_packet(socket_client,&client_info_packet_incoming);//getting the connected client information i.e. username,port,ip
+//    insert_client(&client_info_packet_incoming, &clients_arr);
 
 
-        print_client_info(&client_info_packet_incoming);
+        //print_client_info(&client_info_packet_incoming);
 
-        close(socket_client);
-   // }
+       // close(socket_client);
+    }
     return 1;
 
 
 
 
 }
+
 
 
 
