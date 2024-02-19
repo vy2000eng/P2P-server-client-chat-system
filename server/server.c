@@ -13,8 +13,13 @@ void init_array(clients_arr *clientsArr){
 
 // this is a temporary solution,just to get the main functionality working
 bool insert_client(client_info_packet * clientInfoPacket,clients_arr *clientsArr){
-    clientsArr->client[clientsArr->size ++] = *clientInfoPacket;
-    return true;
+    if(clientsArr->size > 127){
+        return false;
+    }else{
+        clientsArr->client[clientsArr->size ++] = *clientInfoPacket;
+        return true;
+
+    }
 
 }
 
@@ -90,10 +95,8 @@ int run_server()
         send(socket_client, client_connected_string, sizeof(client_connected_string), 0);
         client_info_packet_incoming.packet_type.type        = type_client_info_packet;
         receive_packet(socket_client,&client_info_packet_incoming);//getting the connected client information i.e. username,port,ip
+    insert_client(&client_info_packet_incoming, &clients_arr);
 
-//        client_info_packet_incoming.socket_file_descriptor  = socket_client;
-//        client_info_packet_incoming.client_ip_port          = their_address;
-//        memcpy(client_info_packet_incoming.username, username_packet_incoming.user_name, sizeof(username_packet_incoming.user_name));
 
         print_client_info(&client_info_packet_incoming);
 

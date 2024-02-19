@@ -29,6 +29,8 @@ int run_server();
 
 bool insert_client(client_info_packet * clientInfoPacket,clients_arr *clientsArr);
 
+void * connected_client_thread(void * arg);
+
 
 
 
