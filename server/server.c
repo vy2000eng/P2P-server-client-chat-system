@@ -45,6 +45,8 @@ void * connected_client_thread(void * arg){
     print_client_info(&client_info_packet_incoming);
     insert_client(&client_info_packet_incoming, s_trd_args->connected_clients_arr);
     close(s_trd_args->socket);
+    s_trd_args->socket = -1;
+    s_trd_args->connected_clients_arr = NULL;
     free(s_trd_args);
     return NULL;
 }
