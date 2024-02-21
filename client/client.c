@@ -25,7 +25,45 @@ int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
 
     return 0;
 }
+void get_port_and_ip(int listening_socket, thread_args * _thread_args){
+    char ip[INET_ADDRSTRLEN];
+  //  char portstr[6];
+    // char ipstr[INET6_ADDRSTRLEN];
+    struct sockaddr_storage ss; // Use sockaddr_storage to accommodate both IPv4 and IPv6
+    socklen_t len = sizeof(ss);
+    if (getsockname(listening_socket, (struct sockaddr *)&ss, &len) == -1) {
+        perror("getsockname failed");
+        // Handle error
+    }
 
+// Check if it's IPv4 or IPv6 and handle accordingly
+    if (ss.ss_family == AF_INET) {
+//        if (getnameinfo((struct sockaddr *)&ss, len, ip, sizeof ip, portstr, sizeof portstr, NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
+//            perror("getnameinfo");
+//            exit(EXIT_FAILURE);
+//        }
+//
+//        printf("Listening on IP: %s, Port: %s\n", ip, portstr);
+        // It's IPv4
+
+        struct sockaddr_in *s = (struct sockaddr_in *)&ss;
+        inet_ntop(AF_INET, &s->sin_addr, ip, sizeof(ip)); // Convert IP to string
+        int my_port = ntohs(s->sin_port); // Convert network byte order to host byte order
+        _thread_args->client_info_packet_outgoing.port = my_port;
+        memcpy(_thread_args->client_info_packet_outgoing.client_ip_port, ip, sizeof(ip));
+    } else if (ss.ss_family == AF_INET6) {
+        // It's IPv6
+        struct sockaddr_in6 *s = (struct sockaddr_in6 *)&ss;
+        inet_ntop(AF_INET6, &s->sin6_addr, ip, sizeof(ip)); // Convert IP to string
+        int my_port = ntohs(s->sin6_port); // Convert network byte order to host byte order
+        _thread_args->client_info_packet_outgoing.port = my_port;
+        memcpy(_thread_args->client_info_packet_outgoing.client_ip_port, ip, sizeof(ip));
+    } else {
+        // Handle unexpected address family
+        fprintf(stderr, "Unknown address family");
+    }
+
+}
 
 
 // listening on port 3049
@@ -49,7 +87,7 @@ void * run_client_server(void * arg){
     _thread_args      = (thread_args*)arg;
 
 
-    gai_return        = getaddrinfo(NULL, PORT, &hints, &res);
+    gai_return        = getaddrinfo("127.0.0.1", "0", &hints, &res);
     enable            = 1;
     if(gai_return != 0){
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(gai_return));
@@ -84,15 +122,9 @@ void * run_client_server(void * arg){
     {
         printf("listen() failed.");
     }
-    char ip[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &((struct sockaddr_in *)&res)->sin_addr, ip, res->ai_addrlen);
-    int my_port             = ntohs(((struct sockaddr_in *)(res)->ai_addr)->sin_port);
-    _thread_args->client_info_packet_outgoing.port= my_port;
-    memcpy(_thread_args->client_info_packet_outgoing.client_ip_port, ip, sizeof ip);
-
+    get_port_and_ip(listening_socket, _thread_args);
     sem_post(&packet_semaphore);
-    //int port = ntohs((struct sockaddr_in*)res))
-    printf("listening on: %s %d\n", ip, my_port);
+
     while(1){
         socket_client = accept(listening_socket, (struct sockaddr*)&their_addr, (socklen_t*) &addr_len);
         if(socket_client < 0){break;}
