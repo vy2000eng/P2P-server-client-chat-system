@@ -51,9 +51,8 @@ typedef struct message_packet
 
 typedef  struct client_info_packet {
     base_packet packet_type;
-  //  SOCKET      socket_file_descriptor;// TODO: this needs to be fixed, because it's being set only after the client sends it, not before.
     int         port;
-    char        client_ip_port [INET_ADDRSTRLEN];
+    char        client_ip [INET_ADDRSTRLEN];
     char        username       [256];
 }  __attribute__((packed)) client_info_packet;
 

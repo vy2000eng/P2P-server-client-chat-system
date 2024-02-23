@@ -48,7 +48,7 @@ void receive_packet(int socket_client, void * buf) {
             c_i_packet->packet_type =  header;
             n_read                     (socket_client, sizeof(int), &(c_i_packet->port));
             c_i_packet->port        =  ntohl(c_i_packet->port);
-            n_read                     (socket_client, sizeof(c_i_packet->client_ip_port), &(c_i_packet->client_ip_port));
+            n_read                     (socket_client, sizeof(c_i_packet->client_ip), &(c_i_packet->client_ip));
             n_read                     (socket_client, sizeof(c_i_packet->username), &(c_i_packet->username));
         }
             break;

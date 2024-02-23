@@ -41,8 +41,8 @@ void set_client_address(int client_socket_fd, client_info_packet * client_info_p
         // Successfully got the client address
         if (inet_ntop(AF_INET, &(addr.sin_addr), client_ip, INET_ADDRSTRLEN) != NULL) {
             client_info_packet->port = ntohs(addr.sin_port);
-            printf("Client IP: %s, Port: %u\n", client_info_packet->client_ip_port, client_info_packet->port);
-            memcpy(client_info_packet->client_ip_port,client_ip, sizeof (client_info_packet->client_ip_port));
+            printf("Client IP: %s, Port: %u\n", client_info_packet->client_ip, client_info_packet->port);
+            memcpy(client_info_packet->client_ip, client_ip, sizeof (client_info_packet->client_ip));
         } else {
             perror("inet_ntop failed");
         }
@@ -79,7 +79,7 @@ void * connected_client_thread(void * arg){
 
 void print_client_info(client_info_packet * clientInfoPacket){
     printf("client username: %s", clientInfoPacket->username );
-    printf("client ip: %s\n", clientInfoPacket->client_ip_port);
+    printf("client ip: %s\n", clientInfoPacket->client_ip);
     printf("client port: %d\n", clientInfoPacket->port);
 }
 
