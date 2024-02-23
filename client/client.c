@@ -12,10 +12,10 @@ int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
     printf            ("ip: %s port: %s\n",argv[1], argv[2]);
 
     // you need to free ip and port before you free _thread args, or else you'll have a memory leak
-    *_thread_args                                       = malloc(sizeof(thread_args));
+    *_thread_args                        = malloc(sizeof(thread_args));
     if(*_thread_args == NULL){ printf("Failed to allocate memory.\n"); return 1;}
-    (*_thread_args)-> ip                                = (char *) malloc(len_of_argv_1+1);
-    (*_thread_args)-> port                              = (char *) malloc(len_of_argv_2+1);
+    (*_thread_args)   -> ip              = (char *) malloc(len_of_argv_1+1);
+    (*_thread_args)   -> port            = (char *) malloc(len_of_argv_2+1);
     if((*_thread_args)->ip   == NULL ||
        (*_thread_args)->port == NULL)
     {printf("Failed to allocate memory.\n"); return 1;};
@@ -27,13 +27,12 @@ int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
 }
 
 
-
 // listening on port 3049
 void * run_client_server(void * arg){
     struct addrinfo hints;
     struct addrinfo *res;
     struct sockaddr their_addr;
-    thread_args     *_thread_args;
+   // thread_args     *_thread_args;
     int             gai;
     int             listening_socket;
     int             socket_client;
@@ -46,10 +45,10 @@ void * run_client_server(void * arg){
     hints.ai_family   = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags    = AI_PASSIVE;
-    _thread_args      = (thread_args*)arg;
+  //  _thread_args      = (thread_args*)arg;
 
 
-    gai_return        = getaddrinfo(NULL, PORT, &hints, &res);
+    gai_return        = getaddrinfo(NULL, "0", &hints, &res);
     enable            = 1;
     if(gai_return != 0){
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(gai_return));
@@ -84,15 +83,9 @@ void * run_client_server(void * arg){
     {
         printf("listen() failed.");
     }
-    char ip[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &((struct sockaddr_in *)&res)->sin_addr, ip, res->ai_addrlen);
-    int my_port             = ntohs(((struct sockaddr_in *)(res)->ai_addr)->sin_port);
-    _thread_args->client_info_packet_outgoing.port= my_port;
-    memcpy(_thread_args->client_info_packet_outgoing.client_ip_port, ip, sizeof ip);
-
+   // get_port_and_ip(listening_socket, _thread_args);
     sem_post(&packet_semaphore);
-    //int port = ntohs((struct sockaddr_in*)res))
-    printf("listening on: %s %d\n", ip, my_port);
+
     while(1){
         socket_client = accept(listening_socket, (struct sockaddr*)&their_addr, (socklen_t*) &addr_len);
         if(socket_client < 0){break;}
@@ -107,9 +100,11 @@ void *  connect_to_main_server(void * arg){
 //    printf("%s\n", argv[2]);
     //username_packet    username_packet_outgoing;
     client_info_packet  client_info_packet_outgoing;
+    username_packet     username_packet_outgoing;
     thread_args        *_thread_args;
     char               *username_buffer;
     char               buf[18];
+    char               input;
     struct             addrinfo hints;
     struct             addrinfo *res;
     int                gai_return;
@@ -120,9 +115,10 @@ void *  connect_to_main_server(void * arg){
     hints.ai_family     =  AF_UNSPEC;
     hints.ai_socktype   =  SOCK_STREAM;
 
-    sem_wait(&packet_semaphore);
-    _thread_args                                   = (thread_args*)arg;
-    gai_return = getaddrinfo(_thread_args->ip,_thread_args->port, &hints, &res);
+    sem_wait        (&packet_semaphore);
+   _thread_args  = (thread_args*)arg;
+   // this gai is for connecting to the server
+    gai_return    = getaddrinfo(_thread_args->ip,_thread_args->port, &hints, &res);
 
     if(gai_return != 0)
     {
@@ -148,35 +144,15 @@ void *  connect_to_main_server(void * arg){
     printf("%s\n", buf);
 
     printf("Enter Username: ");
+    username_packet_outgoing.packet_type.type = type_username_packet;
+    fgets       (  username_packet_outgoing.user_name, sizeof (username_packet_outgoing.user_name), stdin);
 
-    _thread_args->client_info_packet_outgoing.packet_type.type   = type_client_info_packet;
-    _thread_args->client_info_packet_outgoing.packet_type.length = sizeof (client_info_packet);
-    fgets       (  _thread_args->client_info_packet_outgoing.username, sizeof (_thread_args->client_info_packet_outgoing.username), stdin);
-    printf("packet ready");
-    send_packet (server_socket, &_thread_args->client_info_packet_outgoing);
+    send_packet (server_socket, &username_packet_outgoing);
     close       (server_socket);
 
     return 0;
 }
 
 
-int char_to_int( char * string){
-    char* endPtr;
-    errno = 0; // To detect overflow
-
-    long num = strtol(string, &endPtr, 10);
-
-    // Check for various errors
-    if (endPtr == string) {
-        printf("No digits were found\n");
-    } else if (errno == ERANGE || num > INT_MAX || num < INT_MIN) {
-        printf("The number is out of range for an int\n");
-    } else {
-        return (int)num; // Cast is safe here
-        //printf("The number is %d\n", intNum);
-    }
-    return -1;
-
-}
 
 
