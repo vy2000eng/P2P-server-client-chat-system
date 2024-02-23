@@ -1,8 +1,5 @@
 #include "server.h"
-
-
-
-
+extern mtx_t client_arr_mutex;
 // this is a temporary solution,just to get the main functionality working
 void init_array(clients_arr *clientsArr){
     memset(clientsArr,0,sizeof (*clientsArr));
@@ -22,31 +19,59 @@ bool insert_client(client_info_packet * clientInfoPacket,clients_arr *clientsArr
     }
 
 }
-int init_thread_args(server_thread_args ** s_trd_args,clients_arr * connected_clients_arr, int socket_client ){
-    *s_trd_args = malloc(sizeof (server_thread_args));
+int init_thread_args(server_thread_args ** s_trd_args,clients_arr * connected_clients_arr, int socket_client,client_info_packet * client_info_packet_incoming ){
+    *s_trd_args    = malloc(sizeof (server_thread_args));
     if(*s_trd_args == NULL){ printf("Failed to allocate memory.\n"); return 1;}
-    (*s_trd_args)->socket                = socket_client;
-    (*s_trd_args)->connected_clients_arr = connected_clients_arr;
+    (*s_trd_args)->socket                   = socket_client;
+    (*s_trd_args) ->client_info_packet_na   = client_info_packet_incoming;
+    (*s_trd_args)->connected_clients_arr    = connected_clients_arr;
     return 0;
 
 
+
+}
+
+void set_client_address(int client_socket_fd, client_info_packet * client_info_packet) {
+    struct sockaddr_in addr;
+    socklen_t addr_size = sizeof(struct sockaddr_in);
+    char client_ip[INET_ADDRSTRLEN]; // Buffer to store the IP address
+
+    int res = getpeername(client_socket_fd, (struct sockaddr *)&addr, &addr_size);
+    if (res == 0) {
+        // Successfully got the client address
+        if (inet_ntop(AF_INET, &(addr.sin_addr), client_ip, INET_ADDRSTRLEN) != NULL) {
+            client_info_packet->port = ntohs(addr.sin_port);
+            printf("Client IP: %s, Port: %u\n", client_info_packet->client_ip_port, client_info_packet->port);
+            memcpy(client_info_packet->client_ip_port,client_ip, sizeof (client_info_packet->client_ip_port));
+        } else {
+            perror("inet_ntop failed");
+        }
+    } else {
+        perror("getpeername failed");
+    }
 }
 
 
 void * connected_client_thread(void * arg){
     server_thread_args *s_trd_args;
-    s_trd_args = (server_thread_args*)arg;
 
-    client_info_packet client_info_packet_incoming;
+    mtx_lock(&client_arr_mutex);
+    s_trd_args = (server_thread_args*)arg;
+    mtx_unlock(&client_arr_mutex);
+
+    username_packet username_name_packet_incoming;
     char client_connected_string[18] = "client connected.\n";
     send(s_trd_args->socket, client_connected_string, sizeof(client_connected_string), 0);
-    client_info_packet_incoming.packet_type.type        = type_client_info_packet;
-    receive_packet(s_trd_args->socket,&client_info_packet_incoming);//getting the connected client information i.e. username,port,ip
-    print_client_info(&client_info_packet_incoming);
-    insert_client(&client_info_packet_incoming, s_trd_args->connected_clients_arr);
+    username_name_packet_incoming.packet_type.type        = type_client_info_packet;
+    receive_packet(s_trd_args->socket,&username_name_packet_incoming);
+
+    mtx_lock(&client_arr_mutex);
+    memcpy(s_trd_args->client_info_packet_na->username, username_name_packet_incoming.user_name,sizeof (username_name_packet_incoming.user_name));
+    insert_client(s_trd_args->client_info_packet_na, s_trd_args->connected_clients_arr);
+    mtx_unlock(&client_arr_mutex);
+
+
     close(s_trd_args->socket);
-    s_trd_args->socket = -1;
-    s_trd_args->connected_clients_arr = NULL;
     free(s_trd_args);
     return NULL;
 }
@@ -63,7 +88,7 @@ int run_server()
     //packets
     clients_arr          clients_arr;//eventually, this will be an sqllite db
     username_packet      username_packet_incoming;
-    client_info_packet   client_info_packet_incoming;
+    client_info_packet  client_info_packet_incoming;
 
     struct              sockaddr_in their_address;
     struct              addrinfo         hints;
@@ -74,14 +99,15 @@ int run_server()
     int                 enable;
     int                 addr_len;
 
-    memset                 (&hints, 0,sizeof hints);
-    init_array             (&clients_arr);
-    hints.ai_family     =  AF_UNSPEC;
-    hints.ai_socktype   =  SOCK_STREAM;
-    hints.ai_flags      =  AI_PASSIVE;
-    gai_return          =  getaddrinfo(NULL, MY_PORT, &hints, &res);
-    enable              =  1;
-    addr_len            =  sizeof (their_address);
+    client_info_packet_incoming.packet_type.type = type_client_info_packet;
+    memset                                          (&hints, 0,sizeof hints);
+    init_array                                      (&clients_arr);
+    hints.ai_family                              =  AF_UNSPEC;
+    hints.ai_socktype                            =  SOCK_STREAM;
+    hints.ai_flags                               =  AI_PASSIVE;
+    gai_return                                   =  getaddrinfo(NULL, MY_PORT, &hints, &res);
+    enable                                       =  1;
+    addr_len                                     =  sizeof (their_address);
 
     if(gai_return != 0)
     {
@@ -121,7 +147,12 @@ int run_server()
        server_thread_args * s_trd_args = NULL;
        socket_client = accept(listening_socket, (struct sockaddr *) &their_address, (socklen_t *) &addr_len);
        if (socket_client < 0) { break; };
-       init_thread_args(&s_trd_args, &clients_arr, socket_client);
+       set_client_address(socket_client,&client_info_packet_incoming);
+
+       mtx_lock(&client_arr_mutex);
+       init_thread_args(&s_trd_args, &clients_arr, socket_client, &client_info_packet_incoming);
+       mtx_unlock(&client_arr_mutex);
+
        thread_t client_thread;
        pthread_create(&client_thread, NULL, connected_client_thread, s_trd_args);
        pthread_detach(client_thread);
