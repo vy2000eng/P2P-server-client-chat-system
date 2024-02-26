@@ -40,8 +40,8 @@ void set_client_address(int client_socket_fd, client_info_packet * client_info_p
     if (res == 0) {
         // Successfully got the client address
         if (inet_ntop(AF_INET, &(addr.sin_addr), client_ip, INET_ADDRSTRLEN) != NULL) {
-            client_info_packet->port = ntohs(addr.sin_port);
-            printf("Client IP: %s, Port: %u\n", client_info_packet->client_ip, client_info_packet->port);
+           // client_info_packet->port = ntohs(addr.sin_port);
+            printf("Client IP: %s\n",client_ip );
             memcpy(client_info_packet->client_ip, client_ip, sizeof (client_info_packet->client_ip));
         } else {
             perror("inet_ntop failed");
@@ -52,33 +52,41 @@ void set_client_address(int client_socket_fd, client_info_packet * client_info_p
 }
 
 
-void * connected_client_thread(void * arg){
-    server_thread_args *s_trd_args;
+void * connected_client_thread(void * arg)
+{
+    server_thread_args                               *s_trd_args;
+    username_packet                                  username_name_packet_incoming;
+    port_packet                                      port_packet_incoming;
+    port_packet_incoming.packet_type.type          = type_port_packet;
+    username_name_packet_incoming.packet_type.type = type_username_packet;
 
-    mtx_lock(&client_arr_mutex);
-    s_trd_args = (server_thread_args*)arg;
-    mtx_unlock(&client_arr_mutex);
+    char client_connected_string[18]               = "client connected.\n";
 
-    username_packet username_name_packet_incoming;
-    char client_connected_string[18] = "client connected.\n";
-    send(s_trd_args->socket, client_connected_string, sizeof(client_connected_string), 0);
-    username_name_packet_incoming.packet_type.type        = type_client_info_packet;
+    mtx_lock      (&client_arr_mutex);
+    s_trd_args =  (server_thread_args*)arg;
+    mtx_unlock    (&client_arr_mutex);
+
+    send          (s_trd_args->socket, client_connected_string, sizeof(client_connected_string), 0);
+    receive_packet(s_trd_args->socket, &port_packet_incoming);
+
     receive_packet(s_trd_args->socket,&username_name_packet_incoming);
 
-    mtx_lock(&client_arr_mutex);
-    memcpy(s_trd_args->client_info_packet_na->username, username_name_packet_incoming.user_name,sizeof (username_name_packet_incoming.user_name));
-    insert_client(s_trd_args->client_info_packet_na, s_trd_args->connected_clients_arr);
-    mtx_unlock(&client_arr_mutex);
+    mtx_lock      (&client_arr_mutex);
+    memcpy        (s_trd_args->client_info_packet_na->username, username_name_packet_incoming.user_name,sizeof (username_name_packet_incoming.user_name));
+    s_trd_args->client_info_packet_na->port = port_packet_incoming.port;
+   // memcpy        (s_trd_args->client_info_packet_na->port,port_packet_incoming.port, sizeof(port_packet_incoming.port));
+    print_client_info(s_trd_args->client_info_packet_na);
+    insert_client (s_trd_args->client_info_packet_na, s_trd_args->connected_clients_arr);
+    mtx_unlock    (&client_arr_mutex);
 
-
-    close(s_trd_args->socket);
-    free(s_trd_args);
+    close         (s_trd_args->socket);
+    free          (s_trd_args);
     return NULL;
 }
 
 
 void print_client_info(client_info_packet * clientInfoPacket){
-    printf("client username: %s", clientInfoPacket->username );
+    printf("client username: %s\n", clientInfoPacket->username );
     printf("client ip: %s\n", clientInfoPacket->client_ip);
     printf("client port: %d\n", clientInfoPacket->port);
 }
@@ -147,6 +155,7 @@ int run_server()
        server_thread_args * s_trd_args = NULL;
        socket_client = accept(listening_socket, (struct sockaddr *) &their_address, (socklen_t *) &addr_len);
        if (socket_client < 0) { break; };
+       // we have not yet assigned the port number yet. That happens in connected_client_thread
        set_client_address(socket_client,&client_info_packet_incoming);
 
        mtx_lock(&client_arr_mutex);

@@ -16,8 +16,10 @@ int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
     if(*_thread_args == NULL){ printf("Failed to allocate memory.\n"); return 1;}
     (*_thread_args)   -> ip              = (char *) malloc(len_of_argv_1+1);
     (*_thread_args)   -> port            = (char *) malloc(len_of_argv_2+1);
-    if((*_thread_args)->ip   == NULL ||
-       (*_thread_args)->port == NULL)
+    (*_thread_args)   ->listening_port   = (int  *) malloc(sizeof(int));
+    if((*_thread_args)->ip   == NULL  ||
+       (*_thread_args)->port == NULL  ||
+       (*_thread_args)->listening_port == NULL)
     {printf("Failed to allocate memory.\n"); return 1;};
 
     strcpy((*_thread_args)->ip,argv[1]);
@@ -32,7 +34,8 @@ void * run_client_server(void * arg){
     struct addrinfo hints;
     struct addrinfo *res;
     struct sockaddr their_addr;
-   // thread_args     *_thread_args;
+    struct sockaddr_in sin;
+    thread_args     *_thread_args;
     int             gai;
     int             listening_socket;
     int             socket_client;
@@ -45,7 +48,7 @@ void * run_client_server(void * arg){
     hints.ai_family   = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags    = AI_PASSIVE;
-  //  _thread_args      = (thread_args*)arg;
+    _thread_args      = (thread_args*)arg;
 
 
     gai_return        = getaddrinfo(NULL, "0", &hints, &res);
@@ -78,6 +81,16 @@ void * run_client_server(void * arg){
        // return 0;
     }
 
+    socklen_t len = sizeof(sin);
+    if (getsockname(listening_socket, (struct sockaddr *)&sin, &len) == -1) {
+        perror("getsockname");
+    } else {
+        printf("Port number %d\n", ntohs(sin.sin_port));
+        *_thread_args->listening_port = ntohs(sin.sin_port);
+    }
+
+
+
     freeaddrinfo(res);
     if(listen(listening_socket,BACKLOG ) < 0)
     {
@@ -96,27 +109,26 @@ void * run_client_server(void * arg){
 }
 
 void *  connect_to_main_server(void * arg){
-//    printf("printing args\n");
-//    printf("%s\n", argv[2]);
-    //username_packet    username_packet_outgoing;
-    client_info_packet  client_info_packet_outgoing;
+
+    port_packet         port_packet_outgoing;
     username_packet     username_packet_outgoing;
     thread_args        *_thread_args;
-    char               *username_buffer;
-    char               buf[18];
-    char               input;
+    char               buf[17];
     struct             addrinfo hints;
     struct             addrinfo *res;
     int                gai_return;
     int                server_socket;
-    int                port;
-    size_t             length_of_username;
-    memset(&hints, 0,sizeof hints);
-    hints.ai_family     =  AF_UNSPEC;
-    hints.ai_socktype   =  SOCK_STREAM;
 
-    sem_wait        (&packet_semaphore);
+    sem_wait (&packet_semaphore);
+    memset   (&hints, 0,sizeof hints);
+    hints.ai_family                            =  AF_UNSPEC;
+    hints.ai_socktype                          =  SOCK_STREAM;
+    port_packet_outgoing.packet_type.type      = type_port_packet;
+    username_packet_outgoing.packet_type.type  = type_username_packet;
+
+
    _thread_args  = (thread_args*)arg;
+
    // this gai is for connecting to the server
     gai_return    = getaddrinfo(_thread_args->ip,_thread_args->port, &hints, &res);
 
@@ -140,11 +152,13 @@ void *  connect_to_main_server(void * arg){
     }
     freeaddrinfo(res);
     // confirming connection by receiving "client connected." from server.
-    recv(server_socket,buf, sizeof buf, 0);
-    printf("%s\n", buf);
+    recv        (server_socket,buf, sizeof buf, 0);
+    printf      ("%s", buf);
+    port_packet_outgoing.port = *_thread_args->listening_port;
+    //memcpy      (port_packet_outgoing.port, (*_thread_args).listening_port, sizeof (port_packet_outgoing.port));
+    send_packet (server_socket,&port_packet_outgoing);
 
-    printf("Enter Username: ");
-    username_packet_outgoing.packet_type.type = type_username_packet;
+    printf      ("Enter Username: ");
     fgets       (  username_packet_outgoing.user_name, sizeof (username_packet_outgoing.user_name), stdin);
 
     send_packet (server_socket, &username_packet_outgoing);

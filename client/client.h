@@ -25,11 +25,14 @@ extern mtx_t thread_args_mutex;
 typedef struct thread_args{
     char * ip;
     char * port;
+    int  * listening_port;
   //  client_info_packet client_info_packet_outgoing;
 }thread_args;
 
 //initializes the strings inside of thread_args that are passed in via command line args
 int    init_thread_args(thread_args ** _thread_args,int argc, char ** argv);
+
+
 
 void * run_client_server   (void * arg);
 
