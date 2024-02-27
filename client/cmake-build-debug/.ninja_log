@@ -1,6 +1,0 @@
-# ninja log v5
-15	31	1707276151616836316	cli	96e2967a449da75f
-0	20	1707359985435302280	build.ninja	114bd3f009d44301
-0	9	1707275553840412918	CMakeFiles/cli.dir/home/voldemort/CLionProjects/multithreaded_client_server_chat/shared/utils.c.o	c673015e5a9380
-1	15	1707276151600836605	CMakeFiles/cli.dir/main.c.o	a3d2ca6ba17a5fe5
-1	11	1707276151596836677	CMakeFiles/cli.dir/client.c.o	df46806bab26d766
