@@ -63,8 +63,8 @@ typedef  struct client_info_packet {
 }  __attribute__((packed)) client_info_packet;
 
 
-void   receive_packet  (int socket_client, void *buf);
-void   send_packet     (int socket_client, void *buf);
+int  receive_packet  (int socket_client, void *buf);
+int   send_packet     (int socket_client, void *buf);
 static bool n_read     (int socket_client, ssize_t len, void * buf);
 static bool n_write    (int socket_client, ssize_t len, void * buf);
 

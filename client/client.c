@@ -171,10 +171,16 @@ void *  connect_to_main_server(void * arg){
     // confirming connection by receiving "client connected." from server.
     recv        (server_socket, buf, sizeof buf, 0);
     printf      ("%s", buf);
-    send_packet (server_socket,&port_packet_outgoing);
+
+    if(send_packet (server_socket,&port_packet_outgoing) < 0)
+    { perror("send_packet() failed."); *thread_return_value = -1; pthread_exit(thread_return_value);}
+
     printf      ("Enter Username: ");
     fgets       (  username_packet_outgoing.user_name, sizeof (username_packet_outgoing.user_name), stdin);
-    send_packet (server_socket, &username_packet_outgoing);
+
+    if (send_packet (server_socket, &username_packet_outgoing) < 0 )
+    { perror("send_packet() failed."); *thread_return_value = -1; pthread_exit(thread_return_value);}
+
     close       (server_socket);
     *thread_return_value = 0;
     pthread_exit(thread_return_value);
