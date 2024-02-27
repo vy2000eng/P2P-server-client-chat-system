@@ -7,18 +7,18 @@ void receive_packet(int socket_client, void * buf) {
     header.type         = ntohl(header.type);
     header.length       = ntohl(header.length);
     ssize_t data_length = header.length - (long) sizeof(base_packet);
-    switch (header.type) {
-        case type_username_packet: {
-            username_packet *upacket;
-            upacket = (username_packet *) buf;
+    switch (header.type)
+    {
+        case type_username_packet:
+        {
+            username_packet        *upacket;
+            upacket              = (username_packet *) buf;
             upacket->packet_type = header;
-            n_read(socket_client, sizeof (upacket->user_name), upacket->user_name);
-            printf                     ("packet: %s\n", upacket->user_name);
-
-
+            n_read                 (socket_client, sizeof (upacket->user_name), upacket->user_name);
         }
-            break;
-        case type_message_packet: {
+        break;
+        case type_message_packet:
+        {
 
             message_packet            *  m_packet;
             m_packet                   = (message_packet *) buf;
@@ -28,23 +28,22 @@ void receive_packet(int socket_client, void * buf) {
             ssize_t remaining_length   = data_length - sizeof(SOCKET);
             n_read                       (socket_client, remaining_length, m_packet->message);
         }
-            break;
-        case type_connected_clients_packet: {
+        break;
+        case type_connected_clients_packet:
+        {
             connected_clients_packet *ccpacket;
             ccpacket               = (connected_clients_packet *) buf;
             ccpacket->packet_type  = header;
             n_read                   (socket_client, data_length, ccpacket->connected_clients);
         }
-            break;
+        break;
         case type_port_packet:
         {
             port_packet           * p_packet;
             p_packet              = (port_packet*)buf;
             p_packet->packet_type = header;
-            n_read(socket_client, sizeof (p_packet->port), &(p_packet->port));
+            n_read                  (socket_client, sizeof (p_packet->port), &(p_packet->port));
             p_packet->port        = ntohl(p_packet->port);
-            //n_read                  (socket_client, sizeof (p_packet->port),&(p_packet->port));
-
         }
         break;
 //        case type_socket_fd_packet:
@@ -61,13 +60,12 @@ void receive_packet(int socket_client, void * buf) {
             client_info_packet         *c_i_packet;
             c_i_packet              =  (client_info_packet *) buf;
             c_i_packet->packet_type =  header;
-          //  n_read                     (socket_client, sizeof (c_i_packet->port), &(c_i_packet->port));
             n_read                     (socket_client, sizeof(int), &(c_i_packet->port));
             c_i_packet->port        =  ntohl(c_i_packet->port);
             n_read                     (socket_client, sizeof(c_i_packet->client_ip), &(c_i_packet->client_ip));
             n_read                     (socket_client, sizeof(c_i_packet->username), &(c_i_packet->username));
         }
-            break;
+        break;
     }
 }
 
@@ -80,9 +78,6 @@ void send_packet(SOCKET socket_client, void * buf) {
             type->type               = htonl(type->type);
             type->length             = htonl(sizeof(username_packet));
             username_packet *upacket = (username_packet *) buf;
-            printf                     ("packet: %u\n", htonl(upacket->packet_type.length));
-            printf                     ("packet: %s\n", upacket->user_name);
-
             n_write                    (socket_client, sizeof(username_packet), upacket);
         }
         break;

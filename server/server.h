@@ -24,7 +24,7 @@ typedef struct client_arr{
 }clients_arr;
 
 typedef struct server_thread_args{
-    int socket;
+    int                  socket;
     client_info_packet * client_info_packet_na;
     clients_arr        * connected_clients_arr;
 }server_thread_args;
