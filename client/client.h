@@ -39,7 +39,7 @@ void * run_client_server   (void * arg);
 //void get_port_and_ip(int listening_socket, thread_args * _thread_args);
 
 /*   - connect_to_main_server():
- *      -   Connects to the server in ../server/main.c "run_server()", on the port that server is listening on.
+ *      -   Connects to the server in ../server/main.c "set_up_server()", on the port that server is listening on.
  *          For now, you need to specify it via program args ./cli 127.0.0.1 3048.
  *
  *      -   Leaves a record of the client in the server application of who exactly the client is.
