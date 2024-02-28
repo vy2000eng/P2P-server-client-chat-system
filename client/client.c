@@ -61,7 +61,8 @@ void * run_client_server(void * arg){
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(gai_return));
         freeaddrinfo(res);
         *thread_return_value = -1;
-        pthread_exit(thread_return_value);    }
+        pthread_exit(thread_return_value);
+    }
 
     listening_socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
@@ -70,20 +71,23 @@ void * run_client_server(void * arg){
         printf("socket() failed.\n");
         freeaddrinfo(res);
         *thread_return_value = -1;
-        pthread_exit(thread_return_value);    }
+        pthread_exit(thread_return_value);
+    }
 
     if (setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
         perror("setsockopt(SO_REUSEADDR) failed");
         freeaddrinfo(res);
         *thread_return_value = -1;
-        pthread_exit(thread_return_value);    }
+        pthread_exit(thread_return_value);
+    }
 
     if(bind(listening_socket, res->ai_addr, res->ai_addrlen) == -1)
     {
         perror("bind() failed");
         freeaddrinfo(res);
         *thread_return_value = -1;
-        pthread_exit(thread_return_value);    }
+        pthread_exit(thread_return_value);
+    }
 
     socklen_t len = sizeof(sin);
     if (getsockname(listening_socket, (struct sockaddr *)&sin, &len) == -1) {
@@ -145,9 +149,6 @@ int connect_to_server(int * server_socket, char * ip ,char *  port){
     }
     freeaddrinfo(res);
     return 0;
-
-
-
 
 }
 
