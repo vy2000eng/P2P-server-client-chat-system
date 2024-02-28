@@ -104,7 +104,7 @@ void print_client_info(client_info_packet *clientInfoPacket);
 
 void * connected_client_thread(void * arg);
 
-int run_server();
+int set_up_server();
 
 void set_client_address(int client_socket, client_info_packet * client_info_packet_incoming);
 
