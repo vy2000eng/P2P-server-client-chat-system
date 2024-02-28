@@ -47,6 +47,8 @@ void * run_client_server   (void * arg);
  */
 void * connect_to_main_server (void * arg);
 
+int connect_to_server(int * server_socket,  char * ip,char* port);
+
 
 
 

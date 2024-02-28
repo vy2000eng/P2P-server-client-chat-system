@@ -116,57 +116,63 @@ void * run_client_server(void * arg){
     pthread_exit(thread_return_value);
 }
 
+int connect_to_server(int * server_socket, char * ip ,char *  port){
+    struct              addrinfo hints;
+    struct              addrinfo *res;
+    int                 gai_return;
+
+    memset                                        (&hints, 0,sizeof hints);
+    hints.ai_family                            =  AF_UNSPEC;
+    hints.ai_socktype                          =  SOCK_STREAM;
+    gai_return = getaddrinfo(ip,port, &hints, &res);
+    if(gai_return != 0)
+    {
+        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(gai_return));
+        return -1;
+    }
+    *server_socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if(server_socket< 0)
+    {
+        printf("socket() failed.\n");
+        freeaddrinfo(res);
+        return -1;
+    }
+
+    if(connect(*server_socket, res->ai_addr, res->ai_addrlen) < 0)
+    {
+        printf("bind() failed.\n");
+        return -1;
+    }
+    freeaddrinfo(res);
+    return 0;
+
+
+
+
+}
+
 void *  connect_to_main_server(void * arg){
 
     port_packet         port_packet_outgoing;
     username_packet     username_packet_outgoing;
     thread_args         *_thread_args;
     char                buf[18];
-    struct              addrinfo hints;
-    struct              addrinfo *res;
-    int                 gai_return;
     int                 server_socket;
     int             *   thread_return_value;
 
 
     sem_wait                                      (&packet_semaphore);
-    memset                                        (&hints, 0,sizeof hints);
-    hints.ai_family                            =  AF_UNSPEC;
-    hints.ai_socktype                          =  SOCK_STREAM;
     port_packet_outgoing.packet_type.type      =  type_port_packet;
     username_packet_outgoing.packet_type.type  =  type_username_packet;
     _thread_args                               =  (thread_args*)arg;
     port_packet_outgoing.port                  =  *_thread_args->listening_port;
     thread_return_value                        =  malloc(sizeof (int));
 
-
-    // this gai is for connecting to the server
-    gai_return = getaddrinfo(_thread_args->ip,_thread_args->port, &hints, &res);
-
-    if(gai_return != 0)
-    {
-        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(gai_return));
+    if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0){
         *thread_return_value = -1;
         pthread_exit(thread_return_value);
-    }
 
-    server_socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-
-    if(server_socket< 0)
-    {
-        printf("socket() failed.\n");
-        freeaddrinfo(res);
-        *thread_return_value = -1;
-        pthread_exit(thread_return_value);
     }
-
-    if(connect(server_socket, res->ai_addr, res->ai_addrlen) < 0)
-    {
-        printf("bind() failed.\n");
-        *thread_return_value = -1;
-        pthread_exit(thread_return_value);
-    }
-    freeaddrinfo(res);
 
     // confirming connection by receiving "client connected." from server.
     recv        (server_socket, buf, sizeof buf, 0);
@@ -185,6 +191,8 @@ void *  connect_to_main_server(void * arg){
     *thread_return_value = 0;
     pthread_exit(thread_return_value);
 }
+
+
 
 
 

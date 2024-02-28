@@ -6,12 +6,13 @@
 int main(int argc, char*argv[]) {
     // intro();
 
-    thread_t     client_server_thread;
-    thread_t     main_server_thread;
-    void       * client_server_thread_return_value;
-    void       * main_server_thread_return_value;
-    thread_args *trd_args = NULL;
 
+    thread_t      client_server_thread;
+    thread_t      main_server_thread;
+    void        * client_server_thread_return_value;
+    void        * main_server_thread_return_value;
+    thread_args * trd_args = NULL;
+    int          server_socket;
 
     if (argc < 3) {
         fprintf(stderr, "usage: tcp_client hostname port\n");
