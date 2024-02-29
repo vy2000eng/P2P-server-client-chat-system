@@ -134,7 +134,15 @@ int send_packet(SOCKET socket_client, void * buf) {
             c_i_packet->port               = htonl(c_i_packet->port);
             return n_write                   (socket_client, sizeof(client_info_packet), c_i_packet) ? 0 : -1;
         }
-        break;
+        case type_action_packet:
+        {
+            type->type               = htonl(type->type);
+            type->length             = htonl(sizeof (action_packet));
+            action_packet  *a_packet = (action_packet*) buf;
+            a_packet->action         = htonl(a_packet->action);
+            return n_write             (socket_client, sizeof (action_packet), a_packet);
+
+        }
 
     }
 }
