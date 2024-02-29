@@ -166,7 +166,7 @@ void *  connect_to_main_server(void * arg){
     port_packet_outgoing.packet_type.type      =  type_port_packet;
     username_packet_outgoing.packet_type.type  =  type_username_packet;
     action_packet_outgoing.packet_type.type    =  type_action_packet;
-    action_packet_outgoing.action              =  1;
+    action_packet_outgoing.action              =  0;
     _thread_args                               =  (thread_args*)arg;
     port_packet_outgoing.port                  =  *_thread_args->listening_port;
     thread_return_value                        =  malloc(sizeof (int));

@@ -26,17 +26,11 @@ typedef struct thread_args{
     char * ip;
     char * port;
     int  * listening_port;
-  //  client_info_packet client_info_packet_outgoing;
 }thread_args;
 
 //initializes the strings inside of thread_args that are passed in via command line args
-int    init_thread_args(thread_args ** _thread_args,int argc, char ** argv);
-
-
-
+int    init_thread_args    (thread_args ** _thread_args,int argc, char ** argv);
 void * run_client_server   (void * arg);
-
-//void get_port_and_ip(int listening_socket, thread_args * _thread_args);
 
 /*   - connect_to_main_server():
  *      -   Connects to the server in ../server/main.c "set_up_server()", on the port that server is listening on.
@@ -46,9 +40,8 @@ void * run_client_server   (void * arg);
  *          This is so that other clients can request it and use that information to connect to it later.
  */
 void * connect_to_main_server (void * arg);
-
-int connect_to_server(int * server_socket,  char * ip,char* port);
-
+void * request_client         (void * arg);
+int    connect_to_server      (int * server_socket,  char * ip,char* port);
 
 
 

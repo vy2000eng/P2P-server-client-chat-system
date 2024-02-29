@@ -74,29 +74,39 @@ void * connected_client_thread(void * arg)
     s_trd_args =  (server_thread_args*)arg;
     mtx_unlock    (&client_arr_mutex);
 
-
-
     send          (s_trd_args->socket, client_connected_string, sizeof(client_connected_string), 0);
-    receive_packet(s_trd_args->socket, &action_packet_incoming);
-    printf("action packet: %d\n ", action_packet_incoming.action);
+    if(receive_packet(s_trd_args->socket, &action_packet_incoming)<0)
+    {perror("receive_packet(&action_packet_incoming) failed.");}
 
 
-    if(receive_packet(s_trd_args->socket, &port_packet_incoming)< 0)
-    {perror("receive_packet(&port_packet_incoming) failed.");}
+    if(action_packet_incoming.action == 0)
+    {
+        printf("action packet: %d\n ", action_packet_incoming.action);
 
-    if(receive_packet(s_trd_args->socket,&username_name_packet_incoming) < 0)
-    {perror("receive_packet(&username_name_packet_incoming) failed.");}
 
-    mtx_lock      (&client_arr_mutex);
-    memcpy        (s_trd_args->client_info_packet_na->username, username_name_packet_incoming.user_name,sizeof (username_name_packet_incoming.user_name));
-    s_trd_args->client_info_packet_na->port = port_packet_incoming.port;
-    print_client_info(s_trd_args->client_info_packet_na);
-    insert_client (s_trd_args->client_info_packet_na, s_trd_args->connected_clients_arr);
-    mtx_unlock    (&client_arr_mutex);
+        if(receive_packet(s_trd_args->socket, &port_packet_incoming)< 0)
+        {perror("receive_packet(&port_packet_incoming) failed.");}
 
-    close         (s_trd_args->socket);
-    free          (s_trd_args);
-    s_trd_args = NULL;
+        if(receive_packet(s_trd_args->socket,&username_name_packet_incoming) < 0)
+        {perror("receive_packet(&username_name_packet_incoming) failed.");}
+
+        mtx_lock      (&client_arr_mutex);
+        memcpy        (s_trd_args->client_info_packet_na->username, username_name_packet_incoming.user_name,sizeof (username_name_packet_incoming.user_name));
+        s_trd_args->client_info_packet_na->port = port_packet_incoming.port;
+        print_client_info(s_trd_args->client_info_packet_na);
+        insert_client (s_trd_args->client_info_packet_na, s_trd_args->connected_clients_arr);
+        mtx_unlock    (&client_arr_mutex);
+
+        close         (s_trd_args->socket);
+        free          (s_trd_args);
+        s_trd_args = NULL;
+
+    }
+    if(action_packet_incoming.action == 1){
+        char buf[] = "you are going to receive a client info packet eventually";
+
+    }
+
     return NULL;
 }
 
