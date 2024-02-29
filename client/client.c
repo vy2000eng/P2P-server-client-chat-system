@@ -153,7 +153,7 @@ int connect_to_server(int * server_socket, char * ip ,char *  port){
 }
 
 void *  connect_to_main_server(void * arg){
-
+    action_packet       action_packet_outgoing;
     port_packet         port_packet_outgoing;
     username_packet     username_packet_outgoing;
     thread_args         *_thread_args;
@@ -165,6 +165,8 @@ void *  connect_to_main_server(void * arg){
     sem_wait                                      (&packet_semaphore);
     port_packet_outgoing.packet_type.type      =  type_port_packet;
     username_packet_outgoing.packet_type.type  =  type_username_packet;
+    action_packet_outgoing.packet_type.type    =  type_action_packet;
+    action_packet_outgoing.action              =  0;
     _thread_args                               =  (thread_args*)arg;
     port_packet_outgoing.port                  =  *_thread_args->listening_port;
     thread_return_value                        =  malloc(sizeof (int));
@@ -178,6 +180,7 @@ void *  connect_to_main_server(void * arg){
     // confirming connection by receiving "client connected." from server.
     recv        (server_socket, buf, sizeof buf, 0);
     printf      ("%s", buf);
+    send_packet(server_socket,&action_packet_outgoing);
 
     if(send_packet (server_socket,&port_packet_outgoing) < 0)
     { perror("send_packet() failed."); *thread_return_value = -1; pthread_exit(thread_return_value);}
