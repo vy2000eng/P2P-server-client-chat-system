@@ -12,7 +12,6 @@ int main(int argc, char*argv[]) {
     void        * client_server_thread_return_value;
     void        * main_server_thread_return_value;
     thread_args * trd_args = NULL;
-    int          server_socket;
 
     if (argc < 3) {
         fprintf(stderr, "usage: tcp_client hostname port\n");
@@ -28,12 +27,14 @@ int main(int argc, char*argv[]) {
         return 1;
     }
 
-
     if(pthread_create(&main_server_thread, NULL,connect_to_main_server,trd_args) !=0)
     {
         perror("Failed to create thread");
         return 1;
     }
+
+
+
 
 
     if(pthread_join(main_server_thread,&main_server_thread_return_value) != 0 ){
@@ -63,7 +64,7 @@ int main(int argc, char*argv[]) {
     }
 
 
-
+    sem_destroy(&packet_semaphore);
     free(trd_args->ip);
     free(trd_args->port);
     free(trd_args->listening_port);

@@ -21,7 +21,8 @@ typedef enum
     type_connected_clients_packet,
     type_message_packet,
     type_port_packet,
-    type_client_info_packet
+    type_client_info_packet,
+    type_action_packet
 } packet_type;
 
 typedef struct base_packet
@@ -62,9 +63,14 @@ typedef  struct client_info_packet {
     char        username       [32];
 }  __attribute__((packed)) client_info_packet;
 
+typedef struct action{
+    base_packet packet_type;
+    int action;
+} __attribute__((packed)) action_packet;
 
-int  receive_packet  (int socket_client, void *buf);
-int   send_packet     (int socket_client, void *buf);
+
+int    receive_packet  (int socket_client, void *buf);
+int    send_packet     (int socket_client, void *buf);
 static bool n_read     (int socket_client, ssize_t len, void * buf);
 static bool n_write    (int socket_client, ssize_t len, void * buf);
 
