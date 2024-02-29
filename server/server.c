@@ -63,6 +63,7 @@ void * connected_client_thread(void * arg)
     server_thread_args                               *s_trd_args;
     username_packet                                  username_name_packet_incoming;
     port_packet                                      port_packet_incoming;
+    action_packet                                    action_packet_incoming;
     port_packet_incoming.packet_type.type          = type_port_packet;
     username_name_packet_incoming.packet_type.type = type_username_packet;
 
@@ -76,6 +77,9 @@ void * connected_client_thread(void * arg)
 
 
     send          (s_trd_args->socket, client_connected_string, sizeof(client_connected_string), 0);
+    receive_packet(s_trd_args->socket, &action_packet_incoming);
+    printf("action packet: %d\n ", action_packet_incoming.action);
+
 
     if(receive_packet(s_trd_args->socket, &port_packet_incoming)< 0)
     {perror("receive_packet(&port_packet_incoming) failed.");}

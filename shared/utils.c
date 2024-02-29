@@ -57,17 +57,18 @@ int receive_packet(int socket_client, void * buf) {
             client_info_packet         *c_i_packet;
             c_i_packet              =  (client_info_packet *) buf;
             c_i_packet->packet_type =  header;
-            if(!n_read                  (socket_client, sizeof(int), &(c_i_packet->port))){return -1;}
+            if(!n_read                 (socket_client, sizeof(int), &(c_i_packet->port))){return -1;}
             c_i_packet->port        =  ntohl(c_i_packet->port);
-            if(!n_read                  (socket_client, sizeof(c_i_packet->client_ip), &(c_i_packet->client_ip))){return -1;}
+            if(!n_read                 (socket_client, sizeof(c_i_packet->client_ip), &(c_i_packet->client_ip))){return -1;}
             return n_read              (socket_client, sizeof(c_i_packet->username), &(c_i_packet->username)) ? 0:-1;
         }
         case type_action_packet:
         {
-            action_packet  *a_packet;
-            a_packet = (action_packet*) buf;
+            action_packet           *a_packet;
+            a_packet              = (action_packet*) buf;
             a_packet->packet_type = header;
-            return n_read(socket_client, sizeof (int), &(a_packet->action)) ? 0:-1;
+            if(!n_read              (socket_client, sizeof (int), &(a_packet->action))) {return -1;};
+            a_packet->action      = ntohl(a_packet->action);
         }
 
     }
