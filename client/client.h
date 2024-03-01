@@ -39,7 +39,7 @@ void * run_client_server   (void * arg);
  *      -   Leaves a record of the client in the server application of who exactly the client is.
  *          This is so that other clients can request it and use that information to connect to it later.
  */
-void * connect_to_main_server (void * arg);
+int    connect_to_main_server (thread_args * _thread_args);
 void * request_client         (void * arg);
 int    connect_to_server      (int * server_socket,  char * ip,char* port);
 

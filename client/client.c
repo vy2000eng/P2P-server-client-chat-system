@@ -152,28 +152,29 @@ int connect_to_server(int * server_socket, char * ip ,char *  port){
 
 }
 
-void *  connect_to_main_server(void * arg){
+int connect_to_main_server(thread_args * _thread_args){
+    sem_wait(&packet_semaphore);
     action_packet       action_packet_outgoing;
     port_packet         port_packet_outgoing;
     username_packet     username_packet_outgoing;
-    thread_args         *_thread_args;
+    //thread_args         *_thread_args;
     char                buf[18];
     int                 server_socket;
-    int             *   thread_return_value;
+   // int             *   thread_return_value;
 
 
-    sem_wait                                      (&packet_semaphore);
     port_packet_outgoing.packet_type.type      =  type_port_packet;
     username_packet_outgoing.packet_type.type  =  type_username_packet;
     action_packet_outgoing.packet_type.type    =  type_action_packet;
     action_packet_outgoing.action              =  0;
-    _thread_args                               =  (thread_args*)arg;
+  //  _thread_args                               =  (thread_args*)arg;
     port_packet_outgoing.port                  =  *_thread_args->listening_port;
-    thread_return_value                        =  malloc(sizeof (int));
+   // thread_return_value                        =  malloc(sizeof (int));
 
     if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0){
-        *thread_return_value = -1;
-        pthread_exit(thread_return_value);
+        return -1;
+//        *thread_return_value = -1;
+//        pthread_exit(thread_return_value);
 
     }
 
@@ -183,17 +184,20 @@ void *  connect_to_main_server(void * arg){
     send_packet(server_socket,&action_packet_outgoing);
 
     if(send_packet (server_socket,&port_packet_outgoing) < 0)
-    { perror("send_packet() failed."); *thread_return_value = -1; pthread_exit(thread_return_value);}
+    { perror("send_packet() failed."); return -1;}
 
     printf      ("Enter Username: ");
     fgets       (  username_packet_outgoing.user_name, sizeof (username_packet_outgoing.user_name), stdin);
 
     if (send_packet (server_socket, &username_packet_outgoing) < 0 )
-    { perror("send_packet() failed."); *thread_return_value = -1; pthread_exit(thread_return_value);}
+    { perror("send_packet() failed."); return -1;}
+
+        // { perror("send_packet() failed."); *thread_return_value = -1; pthread_exit(thread_return_value);}
 
     close       (server_socket);
-    *thread_return_value = 0;
-    pthread_exit(thread_return_value);
+    return 0;
+   // *thread_return_value = 0;
+   // pthread_exit(thread_return_value);
 }
 
 

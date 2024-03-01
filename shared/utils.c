@@ -69,6 +69,7 @@ int receive_packet(int socket_client, void * buf) {
             a_packet->packet_type = header;
             if(!n_read              (socket_client, sizeof (int), &(a_packet->action))) {return -1;};
             a_packet->action      = ntohl(a_packet->action);
+            return 0;
         }
 
     }
