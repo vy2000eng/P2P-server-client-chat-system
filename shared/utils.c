@@ -85,7 +85,6 @@ int send_packet(SOCKET socket_client, void * buf) {
             type->type               = htonl(type->type);
             type->length             = htonl(sizeof(username_packet));
             username_packet *upacket = (username_packet *) buf;
-
             return n_write(socket_client, sizeof(username_packet), upacket) ?  0:-1;
 
         }

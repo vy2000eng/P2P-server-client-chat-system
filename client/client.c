@@ -154,50 +154,46 @@ int connect_to_server(int * server_socket, char * ip ,char *  port){
 
 int connect_to_main_server(thread_args * _thread_args){
     sem_wait(&packet_semaphore);
+
     action_packet       action_packet_outgoing;
     port_packet         port_packet_outgoing;
     username_packet     username_packet_outgoing;
-    //thread_args         *_thread_args;
     char                buf[18];
     int                 server_socket;
-   // int             *   thread_return_value;
 
+    memset(&username_packet_outgoing, 0 , sizeof (action_packet_outgoing));
+    memset(&port_packet_outgoing, 0, sizeof(port_packet));
+    memset(&username_packet_outgoing,  0,sizeof (username_packet));
 
     port_packet_outgoing.packet_type.type      =  type_port_packet;
     username_packet_outgoing.packet_type.type  =  type_username_packet;
     action_packet_outgoing.packet_type.type    =  type_action_packet;
     action_packet_outgoing.action              =  0;
-  //  _thread_args                               =  (thread_args*)arg;
     port_packet_outgoing.port                  =  *_thread_args->listening_port;
-   // thread_return_value                        =  malloc(sizeof (int));
 
     if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0){
+        perror("connect_to_server() failed.\n" );
         return -1;
-//        *thread_return_value = -1;
-//        pthread_exit(thread_return_value);
-
     }
 
     // confirming connection by receiving "client connected." from server.
-    recv        (server_socket, buf, sizeof buf, 0);
-    printf      ("%s", buf);
-    send_packet(server_socket,&action_packet_outgoing);
+    int res = recv(server_socket, buf, sizeof buf, 0);
+    buf[res] = '\0'; // Ensure null-termination
+
+    if(send_packet (server_socket,&action_packet_outgoing)<0)
+    { perror       ("send_packet() failed."); return -1;}
 
     if(send_packet (server_socket,&port_packet_outgoing) < 0)
-    { perror("send_packet() failed."); return -1;}
+    { perror       ("send_packet() failed."); return -1;}
 
-    printf      ("Enter Username: ");
-    fgets       (  username_packet_outgoing.user_name, sizeof (username_packet_outgoing.user_name), stdin);
+    printf         ("Enter Username: ");
+    fgets          (  username_packet_outgoing.user_name, sizeof (username_packet_outgoing.user_name), stdin);
 
-    if (send_packet (server_socket, &username_packet_outgoing) < 0 )
-    { perror("send_packet() failed."); return -1;}
+    if(send_packet (server_socket, &username_packet_outgoing) < 0 )
+    { perror       ("send_packet() failed."); return -1;}
 
-        // { perror("send_packet() failed."); *thread_return_value = -1; pthread_exit(thread_return_value);}
-
-    close       (server_socket);
+    close          (server_socket);
     return 0;
-   // *thread_return_value = 0;
-   // pthread_exit(thread_return_value);
 }
 
 
