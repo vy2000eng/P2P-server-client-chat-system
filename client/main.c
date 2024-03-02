@@ -23,13 +23,14 @@ int main(int argc, char*argv[]) {
         perror("Failed to create thread");
         return 1;
     }
-    connect_to_main_server(trd_args);
+
+    establish_presence_with_server(trd_args);
+    initiate_P2P_connection(trd_args);
 
     if(pthread_join(client_server_thread, &client_server_thread_return_value)!= 0 )
     {
         perror("Failed to join client server thread.\n");
         return 1;
-
     }
 
     if (client_server_thread_return_value  != NULL )

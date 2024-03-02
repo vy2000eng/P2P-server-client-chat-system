@@ -183,7 +183,7 @@ int listen_for_connection(const int * listening_socket)
     int                 addr_len;
     bool                accept_err;
     addr_len         =  sizeof (their_address);
-    accept_err = false;
+    accept_err       = false;
 
 
 

@@ -152,7 +152,7 @@ int connect_to_server(int * server_socket, char * ip ,char *  port){
 
 }
 
-int connect_to_main_server(thread_args * _thread_args){
+int establish_presence_with_server(thread_args * _thread_args){
     sem_wait(&packet_semaphore);
 
     action_packet       action_packet_outgoing;
@@ -193,6 +193,47 @@ int connect_to_main_server(thread_args * _thread_args){
     { perror       ("send_packet() failed."); return -1;}
 
     close          (server_socket);
+    return 0;
+}
+
+int initiate_P2P_connection(thread_args * _thread_args){
+    int                server_socket;
+    char               buf[18];
+    char               port_number[6];
+    action_packet      action_packet_outgoing;
+    client_info_packet client_info_packet_incoming;
+    username_packet    username_packet_outgoing;
+
+    if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0){
+        perror("connect_to_server() failed.\n" );
+        return -1;
+    }
+    action_packet_outgoing.packet_type.type      = type_action_packet;
+    client_info_packet_incoming.packet_type.type = type_client_info_packet;
+    username_packet_outgoing.packet_type.type    = type_username_packet;
+    action_packet_outgoing.action                = 1;
+    // confirming connection by receiving "client connected." from server.
+    int res = recv(server_socket, buf, sizeof buf, 0);
+    buf[res] = '\0'; // Ensure null-termination
+
+    if(send_packet (server_socket,&action_packet_outgoing)<0)
+    { perror       ("send_packet() failed."); return -1;}
+
+    printf         ("Enter Username of Client You Want To Chat With: ");
+    fgets          (  username_packet_outgoing.user_name, sizeof (username_packet_outgoing.user_name), stdin);
+
+    if(send_packet (server_socket, &username_packet_outgoing) < 0 )
+    { perror       ("send_packet() failed."); return -1;}
+
+    if(receive_packet(server_socket, &client_info_packet_incoming) < 0)
+    { perror("receive_packet() failed."); return -1;}
+
+    sprintf(port_number, "%d",client_info_packet_incoming.port);
+    close(server_socket);
+
+    server_socket = -1;
+    connect_to_server(&server_socket,client_info_packet_incoming.client_ip, port_number);
+
     return 0;
 }
 
