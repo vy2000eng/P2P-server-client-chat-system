@@ -8,6 +8,7 @@ int main(int argc, char*argv[]) {
     thread_t      client_server_thread;
     void        * client_server_thread_return_value;
     thread_args * trd_args = NULL;
+    char          initiate_connection;
 
     if (argc < 3)
     {
@@ -25,7 +26,18 @@ int main(int argc, char*argv[]) {
     }
 
     establish_presence_with_server(trd_args);
-    initiate_P2P_connection(trd_args);
+
+    do
+    {
+        printf("Initiate Connection With Another Client? (Y(Initiate Connection)/N(Listen For Connection))\n");
+        initiate_connection = getchar();
+    }
+    while(initiate_connection != 'Y' && initiate_connection !='y' && initiate_connection != 'N' && initiate_connection!='n');
+
+    if(initiate_connection == 'Y' || initiate_connection == 'y')
+    {
+        initiate_P2P_connection(trd_args);
+    }
 
     if(pthread_join(client_server_thread, &client_server_thread_return_value)!= 0 )
     {

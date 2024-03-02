@@ -232,7 +232,7 @@ int initiate_P2P_connection(thread_args * _thread_args){
     close(server_socket);
 
     server_socket = -1;
-    connect_to_server(&server_socket,client_info_packet_incoming.client_ip, port_number);
+   // connect_to_server(&server_socket,client_info_packet_incoming.client_ip, port_number);
 
     return 0;
 }

@@ -112,14 +112,18 @@ void * connected_client_thread(void * arg)
         s_trd_args = NULL;
 
     }
-    if(action_packet_incoming.action == 1){
+    if(action_packet_incoming.action == 1)
+    {
         printf("action packet: %d\n", action_packet_incoming.action);
 
         if(receive_packet(s_trd_args->socket,&username_name_packet_incoming) < 0)
         {perror("receive_packet(&username_name_packet_incoming) failed.");}
 
-
-
+        mtx_lock   (&client_arr_mutex);
+        send_packet(s_trd_args->socket,
+                    retrieve_client_from_arr(username_name_packet_incoming.user_name,
+                                                  s_trd_args->connected_clients_arr));
+        mtx_unlock(&client_arr_mutex);
     }
 
     return NULL;
