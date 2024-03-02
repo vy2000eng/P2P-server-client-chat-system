@@ -19,6 +19,16 @@ bool insert_client(client_info_packet * clientInfoPacket,clients_arr *clientsArr
     }
 
 }
+
+client_info_packet * retrieve_client_from_arr(char * username ,clients_arr* _client_arr){
+    for(int i = 0; i < _client_arr->size;i++){
+        if(strcmp(  _client_arr->client[i].username, username) == 0)
+        {return &_client_arr->client[i];}
+    }
+    return NULL;
+}
+
+
 int init_thread_args(server_thread_args ** s_trd_args,clients_arr * connected_clients_arr, int socket_client,client_info_packet * client_info_packet_incoming ){
     *s_trd_args    = malloc(sizeof (server_thread_args));
     if(*s_trd_args == NULL){ printf("Failed to allocate memory.\n"); return 1;}
@@ -103,7 +113,12 @@ void * connected_client_thread(void * arg)
 
     }
     if(action_packet_incoming.action == 1){
-        char buf[] = "you are going to receive a client info packet eventually";
+        printf("action packet: %d\n", action_packet_incoming.action);
+
+        if(receive_packet(s_trd_args->socket,&username_name_packet_incoming) < 0)
+        {perror("receive_packet(&username_name_packet_incoming) failed.");}
+
+
 
     }
 
