@@ -29,7 +29,7 @@ int main(int argc, char*argv[]) {
 
     do
     {
-        printf("Initiate Connection With Another Client? (Y(Initiate Connection)/N(Listen For Connection))\n");
+        printf("Initiate Connection With Another Client? (Y(Initiate Connection)/N(Listen For Connection)):");
         initiate_connection = getchar();
     }
     while(initiate_connection != 'Y' && initiate_connection !='y' && initiate_connection != 'N' && initiate_connection!='n');

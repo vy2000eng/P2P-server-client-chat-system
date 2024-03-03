@@ -31,6 +31,7 @@ typedef struct thread_args{
 //initializes the strings inside of thread_args that are passed in via command line args
 int    init_thread_args    (thread_args ** _thread_args,int argc, char ** argv);
 void * run_client_server   (void * arg);
+void print_client_info(client_info_packet * clientInfoPacket);
 
 /*   - establish_presence_with_server():
  *      -   Connects to the server in ../server/main.c "set_up_server()", on the port that server is listening on.
@@ -44,6 +45,9 @@ void * request_client         (void * arg);
 int    connect_to_server      (int * server_socket,  char * ip,char* port);
 int    initiate_P2P_connection(thread_args * _thread_args);
 
+void clear_input_buffer();
+
+//void check_buffer();
 
 
 

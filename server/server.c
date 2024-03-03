@@ -77,7 +77,7 @@ void * connected_client_thread(void * arg)
     port_packet_incoming.packet_type.type          = type_port_packet;
     username_name_packet_incoming.packet_type.type = type_username_packet;
 
-    char client_connected_string[18]               = "client connected.\n";
+    char client_connected_string[17]               = "client connected.";
 
 
     mtx_lock      (&client_arr_mutex);
@@ -109,6 +109,7 @@ void * connected_client_thread(void * arg)
 
         close         (s_trd_args->socket);
         free          (s_trd_args);
+        printf("connection closed.\n");
         s_trd_args = NULL;
 
     }
