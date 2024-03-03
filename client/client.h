@@ -26,28 +26,28 @@ typedef struct thread_args{
     char * ip;
     char * port;
     int  * listening_port;
-  //  client_info_packet client_info_packet_outgoing;
 }thread_args;
 
 //initializes the strings inside of thread_args that are passed in via command line args
-int    init_thread_args(thread_args ** _thread_args,int argc, char ** argv);
-
-
-
+int    init_thread_args    (thread_args ** _thread_args,int argc, char ** argv);
 void * run_client_server   (void * arg);
+void print_client_info(client_info_packet * clientInfoPacket);
 
-//void get_port_and_ip(int listening_socket, thread_args * _thread_args);
-
-/*   - connect_to_main_server():
- *      -   Connects to the server in ../server/main.c "run_server()", on the port that server is listening on.
+/*   - establish_presence_with_server():
+ *      -   Connects to the server in ../server/main.c "set_up_server()", on the port that server is listening on.
  *          For now, you need to specify it via program args ./cli 127.0.0.1 3048.
  *
  *      -   Leaves a record of the client in the server application of who exactly the client is.
  *          This is so that other clients can request it and use that information to connect to it later.
  */
-void * connect_to_main_server (void * arg);
+int    establish_presence_with_server (thread_args * _thread_args);
+void * request_client         (void * arg);
+int    connect_to_server      (int * server_socket,  char * ip,char* port);
+int    initiate_P2P_connection(thread_args * _thread_args);
 
+void clear_input_buffer();
 
+//void check_buffer();
 
 
 

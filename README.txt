@@ -37,7 +37,7 @@ technical overview:
      *      -   Leaves a record of the client in the server application of who exactly the client is.
      *          This is so that other clients can request it and use that information to connect to it later.
      */
-    void * connect_to_main_server (void * arg);
+    void * establish_presence_with_server (void * arg);
 
 
 
@@ -104,7 +104,7 @@ void print_client_info(client_info_packet *clientInfoPacket);
 
 void * connected_client_thread(void * arg);
 
-int run_server();
+int set_up_server();
 
 void set_client_address(int client_socket, client_info_packet * client_info_packet_incoming);
 

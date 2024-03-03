@@ -61,7 +61,8 @@ void * run_client_server(void * arg){
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(gai_return));
         freeaddrinfo(res);
         *thread_return_value = -1;
-        pthread_exit(thread_return_value);    }
+        pthread_exit(thread_return_value);
+    }
 
     listening_socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
@@ -70,20 +71,23 @@ void * run_client_server(void * arg){
         printf("socket() failed.\n");
         freeaddrinfo(res);
         *thread_return_value = -1;
-        pthread_exit(thread_return_value);    }
+        pthread_exit(thread_return_value);
+    }
 
     if (setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
         perror("setsockopt(SO_REUSEADDR) failed");
         freeaddrinfo(res);
         *thread_return_value = -1;
-        pthread_exit(thread_return_value);    }
+        pthread_exit(thread_return_value);
+    }
 
     if(bind(listening_socket, res->ai_addr, res->ai_addrlen) == -1)
     {
         perror("bind() failed");
         freeaddrinfo(res);
         *thread_return_value = -1;
-        pthread_exit(thread_return_value);    }
+        pthread_exit(thread_return_value);
+    }
 
     socklen_t len = sizeof(sin);
     if (getsockname(listening_socket, (struct sockaddr *)&sin, &len) == -1) {
@@ -116,75 +120,160 @@ void * run_client_server(void * arg){
     pthread_exit(thread_return_value);
 }
 
-void *  connect_to_main_server(void * arg){
-
-    port_packet         port_packet_outgoing;
-    username_packet     username_packet_outgoing;
-    thread_args         *_thread_args;
-    char                buf[18];
+int connect_to_server(int * server_socket, char * ip ,char *  port){
     struct              addrinfo hints;
     struct              addrinfo *res;
     int                 gai_return;
-    int                 server_socket;
-    int             *   thread_return_value;
 
-
-    sem_wait                                      (&packet_semaphore);
     memset                                        (&hints, 0,sizeof hints);
     hints.ai_family                            =  AF_UNSPEC;
     hints.ai_socktype                          =  SOCK_STREAM;
-    port_packet_outgoing.packet_type.type      =  type_port_packet;
-    username_packet_outgoing.packet_type.type  =  type_username_packet;
-    _thread_args                               =  (thread_args*)arg;
-    port_packet_outgoing.port                  =  *_thread_args->listening_port;
-    thread_return_value                        =  malloc(sizeof (int));
-
-
-    // this gai is for connecting to the server
-    gai_return = getaddrinfo(_thread_args->ip,_thread_args->port, &hints, &res);
-
+    gai_return = getaddrinfo(ip,port, &hints, &res);
     if(gai_return != 0)
     {
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(gai_return));
-        *thread_return_value = -1;
-        pthread_exit(thread_return_value);
+        return -1;
     }
-
-    server_socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-
+    *server_socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
     if(server_socket< 0)
     {
         printf("socket() failed.\n");
         freeaddrinfo(res);
-        *thread_return_value = -1;
-        pthread_exit(thread_return_value);
+        return -1;
     }
 
-    if(connect(server_socket, res->ai_addr, res->ai_addrlen) < 0)
+    if(connect(*server_socket, res->ai_addr, res->ai_addrlen) < 0)
     {
         printf("bind() failed.\n");
-        *thread_return_value = -1;
-        pthread_exit(thread_return_value);
+        return -1;
     }
     freeaddrinfo(res);
+    return 0;
+
+}
+
+int establish_presence_with_server(thread_args * _thread_args){
+    sem_wait(&packet_semaphore);
+
+    action_packet       action_packet_outgoing;
+    port_packet         port_packet_outgoing;
+    username_packet     username_packet_outgoing;
+    char                buf[18];
+    int                 server_socket;
+
+    memset(&username_packet_outgoing, 0 , sizeof (action_packet_outgoing));
+    memset(&port_packet_outgoing, 0, sizeof(port_packet));
+    memset(&username_packet_outgoing,  0,sizeof (username_packet));
+
+    port_packet_outgoing.packet_type.type      =  type_port_packet;
+    username_packet_outgoing.packet_type.type  =  type_username_packet;
+    action_packet_outgoing.packet_type.type    =  type_action_packet;
+    action_packet_outgoing.action              =  0;
+    port_packet_outgoing.port                  =  *_thread_args->listening_port;
+
+    if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0){
+        perror("connect_to_server() failed.\n" );
+        return -1;
+    }
 
     // confirming connection by receiving "client connected." from server.
-    recv        (server_socket, buf, sizeof buf, 0);
-    printf      ("%s", buf);
+    int res = recv(server_socket, buf, sizeof buf, 0);
+    buf[res] = '\0'; // Ensure null-termination
+    printf("%s", buf);
+
+    if(send_packet (server_socket,&action_packet_outgoing)<0)
+    { perror       ("send_packet() failed."); return -1;}
 
     if(send_packet (server_socket,&port_packet_outgoing) < 0)
-    { perror("send_packet() failed."); *thread_return_value = -1; pthread_exit(thread_return_value);}
+    { perror       ("send_packet() failed."); return -1;}
 
-    printf      ("Enter Username: ");
-    fgets       (  username_packet_outgoing.user_name, sizeof (username_packet_outgoing.user_name), stdin);
+    printf         ("Enter Username: ");
+    fgets          (  username_packet_outgoing.user_name, sizeof (username_packet_outgoing.user_name), stdin);
 
-    if (send_packet (server_socket, &username_packet_outgoing) < 0 )
-    { perror("send_packet() failed."); *thread_return_value = -1; pthread_exit(thread_return_value);}
+    if(send_packet (server_socket, &username_packet_outgoing) < 0 )
+    { perror       ("send_packet() failed."); return -1;}
 
-    close       (server_socket);
-    *thread_return_value = 0;
-    pthread_exit(thread_return_value);
+    close          (server_socket);
+    return 0;
 }
+
+int initiate_P2P_connection(thread_args * _thread_args){
+    int                server_socket;
+    char               buf[19];
+    char               port_number[6];
+    action_packet      action_packet_outgoing;
+    client_info_packet client_info_packet_incoming;
+    username_packet    username_packet_outgoing;
+
+    if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0){
+        perror("connect_to_server() failed." );
+        return -1;
+    }
+    memset(&username_packet_outgoing, 0 , sizeof(username_packet));
+    action_packet_outgoing.packet_type.type      = type_action_packet;
+    client_info_packet_incoming.packet_type.type = type_client_info_packet;
+    username_packet_outgoing.packet_type.type    = type_username_packet;
+    action_packet_outgoing.action                = 1;
+    // confirming connection by receiving "client connected." from server.
+   // clear_input_buffer();
+    int res = recv(server_socket, buf, sizeof (buf), 0);
+    buf[res] = '\0'; // Ensure null-termination
+    clear_input_buffer();
+
+    printf("%s",buf);
+
+
+    if(send_packet (server_socket,&action_packet_outgoing)<0)
+    { perror       ("send_packet() failed."); return -1;}
+
+
+
+    printf         ("Enter Username of Client You Want To Chat With: ");
+    fgets          (  username_packet_outgoing.user_name, sizeof (username_packet_outgoing.user_name), stdin);
+
+    if(send_packet (server_socket, &username_packet_outgoing) < 0 )
+    { perror       ("send_packet() failed."); return -1;}
+
+    if(receive_packet(server_socket, &client_info_packet_incoming) < 0)
+    { perror("receive_packet() failed."); return -1;}
+
+    sprintf(port_number, "%d",client_info_packet_incoming.port);
+    print_client_info(&client_info_packet_incoming );
+
+    close(server_socket);
+
+    server_socket = -1;
+
+    connect_to_server(&server_socket,client_info_packet_incoming.client_ip, port_number);
+    char c_buff[29];
+    recv(server_socket,c_buff,sizeof (c_buff), 0);
+    printf("c_buff: %s \n", c_buff);
+
+
+    return 0;
+}
+
+void print_client_info(client_info_packet * clientInfoPacket){
+    printf("client username: %s", clientInfoPacket->username );
+    printf("client ip: %s\n", clientInfoPacket->client_ip);
+    printf("client port: %d\n\n", clientInfoPacket->port);
+}
+
+void clear_input_buffer(){
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) { /* discard */ }
+
+}
+
+//void check_buffer(){
+//    int c;
+//    printf("Buffer state before fgets: ");
+//    while ((c = getchar()) != '\n' && c != EOF) {
+//        putchar(c); // Print the leftover characters in the buffer
+//    }
+//    printf("\nAfter buffer check\n");
+//}
+
 
 
 
