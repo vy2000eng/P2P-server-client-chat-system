@@ -217,7 +217,7 @@ int initiate_P2P_connection(thread_args * _thread_args){
     // confirming connection by receiving "client connected." from server.
    // clear_input_buffer();
     int res = recv(server_socket, buf, sizeof (buf), 0);
-    buf[res+1] = '\0'; // Ensure null-termination
+    buf[res] = '\0'; // Ensure null-termination
     clear_input_buffer();
 
     printf("%s",buf);
@@ -243,7 +243,12 @@ int initiate_P2P_connection(thread_args * _thread_args){
     close(server_socket);
 
     server_socket = -1;
-   // connect_to_server(&server_socket,client_info_packet_incoming.client_ip, port_number);
+
+    connect_to_server(&server_socket,client_info_packet_incoming.client_ip, port_number);
+    char c_buff[29];
+    recv(server_socket,c_buff,sizeof (c_buff), 0);
+    printf("c_buff: %s \n", c_buff);
+
 
     return 0;
 }
