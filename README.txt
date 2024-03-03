@@ -24,27 +24,32 @@ technical overview:
         char * port;
     }thread_args;
 
-    //initializes the strings inside of thread_args that are passed in via command line args
-    int    init_thread_args(thread_args ** _thread_args,int argc, char ** argv);
+    int init_thread_args(thread_args ** _thread_args,int argc, char ** argv);
+        -   initializes the strings inside of thread_args that are passed in via command line args
 
     void * run_client_server   (void * arg);
+        -   thread that listens for incoming connections on the client.
 
 
-    /*   - connect_to_main_server():
-     *      -   Connects to the server in ../server/main.c "run_server()", on the port that server is listening on.
-     *          For now, you need to specify it via program args ./cli 127.0.0.1 3048.
-     *
-     *      -   Leaves a record of the client in the server application of who exactly the client is.
-     *          This is so that other clients can request it and use that information to connect to it later.
-     */
+     connect_to_main_server():
+        -   Connects to the server in ../server/main.c "run_server()", on the port that server is listening on.
+            For now, you need to specify it via program args ./cli 127.0.0.1 3048.
+
+        -   Leaves a record of the client in the server application of who exactly the client is.
+            This is so that other clients can request it and use that information to connect to it later.
+
     void * establish_presence_with_server (void * arg);
+        -   logs the client for later retrieval by other clients
 
+    int connect_to_server(int * server_socket, char * ip ,char *  port);
+        -   can be used to connect to anything given the port and ip.
 
+    int initiate_P2P_connection(thread_args * _thread_args);
+        -   initiates the P2P connection by requesting client from the server and then connecting to that client using provided
+            information.
 
-
-
-
-
+    void clear_input_buffer();
+        -   solving some weird buffer issues and fgets not blocking.
 
 
 
@@ -143,6 +148,9 @@ client_info_packet:
         The username is later filled after the client sends it. This packet then gets stored into the client_arr struct, which for now allocates 128 instances of client_info_packet on the stack.
         This is just a preliminary version I eventually would like to refactor this into a sqllite db, and probably add some sort uuid.
 
+action_packet:
+    - used for branching off different actions in the server. When the client is establishing its presence the value is 0.
+    - When the client is retrieving another client, the value is 1.
 
 typedef enum
 {
@@ -172,5 +180,8 @@ typedef  struct client_info_packet {
     char        client_ip [INET_ADDRSTRLEN];
     char        username       [256];
 }  __attribute__((packed)) client_info_packet;
+
+
+
 
 
