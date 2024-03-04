@@ -12,8 +12,7 @@ general overview:
     -   The client is responsible for Three things:
         First, it establishes a listening socket that is used for accepting other client connections.
         Second, it establishes a connection with the server, and sends the port that was assigned to the listening socket.
-        Third, if the client chooses, connect to another client, or just listen for connections. (this needs to be implemented).
-    -   This is all run concurrently.
+        Third, if the client chooses, connect to another client, or just listen for connections.
 
 technical overview:
     extern sem_t packet_semaphore;
