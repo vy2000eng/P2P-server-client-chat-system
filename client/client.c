@@ -28,6 +28,14 @@ int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
     return 0;
 }
 
+int init_client_args(client_args ** _client_args){
+    *_client_args = malloc(sizeof(client_args));
+    if(*_client_args == NULL){ printf("Failed to allocate memory.\n"); return 1;}
+    return 0;
+
+
+}
+
 
 // listening on port 3049
 void * run_client_server(void * arg){
@@ -113,6 +121,7 @@ void * run_client_server(void * arg){
         if(socket_client < 0){accept_failure = -1; break;}
         char client_connected_string[29] = "client connected to client.\n";
         send(socket_client, client_connected_string, sizeof(client_connected_string), 0);
+
     }
 
     //later there will be an exit condition which won't that is not a failure.
@@ -204,12 +213,14 @@ int initiate_P2P_connection(thread_args * _thread_args){
     action_packet      action_packet_outgoing;
     client_info_packet client_info_packet_incoming;
     username_packet    username_packet_outgoing;
+    client_args     *  _client_args;
 
     if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0){
         perror("connect_to_server() failed." );
         return -1;
     }
-    memset(&username_packet_outgoing, 0 , sizeof(username_packet));
+    memset          (&username_packet_outgoing, 0 , sizeof(username_packet));
+    init_client_args(&_client_args);
     action_packet_outgoing.packet_type.type      = type_action_packet;
     client_info_packet_incoming.packet_type.type = type_client_info_packet;
     username_packet_outgoing.packet_type.type    = type_username_packet;
@@ -245,9 +256,11 @@ int initiate_P2P_connection(thread_args * _thread_args){
     server_socket = -1;
 
     connect_to_server(&server_socket,client_info_packet_incoming.client_ip, port_number);
+
     char c_buff[29];
     recv(server_socket,c_buff,sizeof (c_buff), 0);
     printf("c_buff: %s \n", c_buff);
+
 
 
     return 0;
