@@ -13,14 +13,14 @@ int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
 
     // you need to free ip and port before you free _thread args, or else you'll have a memory leak
     *_thread_args                        = malloc(sizeof(thread_args));
-    if(*_thread_args == NULL){ printf("Failed to allocate memory.\n"); return 1;}
+    if(*_thread_args == NULL){ printf("Failed to allocate memory.\n"); return -1;}
     (*_thread_args)   -> ip              = (char *) malloc(len_of_argv_1+1);
     (*_thread_args)   -> port            = (char *) malloc(len_of_argv_2+1);
     (*_thread_args)   ->listening_port   = (int  *) malloc(sizeof(int));
     if((*_thread_args)->ip   == NULL  ||
        (*_thread_args)->port == NULL  ||
        (*_thread_args)->listening_port == NULL)
-    {printf("Failed to allocate memory.\n"); return 1;};
+    {printf("Failed to allocate memory.\n"); return -1;};
 
     strcpy((*_thread_args)->ip,argv[1]);
     strcpy((*_thread_args)->port,argv[2]);
@@ -30,7 +30,7 @@ int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
 
 int init_client_args(client_args ** _client_args){
     *_client_args = malloc(sizeof(client_args));
-    if(*_client_args == NULL){ printf("Failed to allocate memory.\n"); return 1;}
+    if(*_client_args == NULL){ printf("Failed to allocate memory.\n"); return -11;}
     return 0;
 
 
@@ -44,7 +44,9 @@ void * run_client_server(void * arg){
     struct addrinfo     *res;
     struct sockaddr     their_addr;
     struct sockaddr_in  sin;
+    thread_t            P2P_thread;
     thread_args     *   _thread_args;
+    client_args     *   _client_args;
     int             *   thread_return_value;
     int                 accept_failure;
     int                 listening_socket;
@@ -121,6 +123,11 @@ void * run_client_server(void * arg){
         if(socket_client < 0){accept_failure = -1; break;}
         char client_connected_string[29] = "client connected to client.\n";
         send(socket_client, client_connected_string, sizeof(client_connected_string), 0);
+        _client_args->connected_client_socket = &socket_client;
+        pthread_create(&P2P_thread, NULL, P2P_communication_thread,&_client_args );
+        pthread_detach(P2P_thread);
+
+
 
     }
 
@@ -259,6 +266,8 @@ int initiate_P2P_connection(thread_args * _thread_args){
 
     char c_buff[29];
     recv(server_socket,c_buff,sizeof (c_buff), 0);
+
+
     printf("c_buff: %s \n", c_buff);
 
 

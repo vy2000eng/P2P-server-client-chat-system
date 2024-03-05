@@ -29,9 +29,7 @@ typedef struct thread_args{
     int  * listening_port;
 }thread_args;
 
-typedef struct client_args{
-    int * connected_client_socket;
-}client_args;
+
 
 //initializes the strings inside of thread_args that are passed in via command line args
 int    init_client_args    (client_args ** _client_args);
