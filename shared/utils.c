@@ -22,10 +22,10 @@ int receive_packet(int socket_client, void * buf) {
             message_packet            *  m_packet;
             m_packet                   = (message_packet *) buf;
             m_packet->packet_type      = header;
-            if(!n_read                   (socket_client, sizeof(SOCKET), &(m_packet->recipient_socket))){ return -1;}
-            m_packet->recipient_socket = ntohl(m_packet->recipient_socket);
-            ssize_t remaining_length   = data_length - sizeof(SOCKET);
-            return n_read                (socket_client, remaining_length, m_packet->message) ? 0 : -1;
+//            if(!n_read                   (socket_client, sizeof(SOCKET), &(m_packet->recipient_socket))){ return -1;}
+//            m_packet->recipient_socket = ntohl(m_packet->recipient_socket);
+           // ssize_t remaining_length   = data_length - sizeof(SOCKET);
+            return n_read                (socket_client, sizeof (m_packet->message), m_packet->message) ? 0 : -1;
         }
         case type_connected_clients_packet:
         {
@@ -95,7 +95,7 @@ int send_packet(SOCKET socket_client, void * buf) {
             type->type                 = htonl(type->type);
             type->length               = htonl(sizeof(message_packet));
             message_packet *m_packet   = (message_packet *) buf;
-            m_packet->recipient_socket = htonl(m_packet->recipient_socket);
+          //  m_packet->recipient_socket = htonl(m_packet->recipient_socket);
             return n_write              (socket_client, sizeof(message_packet), m_packet) ? 0 : -1;
         }
         break;

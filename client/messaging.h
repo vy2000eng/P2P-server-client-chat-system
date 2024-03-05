@@ -8,6 +8,10 @@
 
 #include "../shared/utils.h"
 #include "thread_db.h"
+#include "threads.h"
+
+
+extern mtx_t communication_mutex;
 
 typedef struct client_args{
     int * connected_client_socket;

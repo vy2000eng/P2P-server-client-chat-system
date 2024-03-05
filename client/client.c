@@ -1,6 +1,6 @@
 #include "client.h"
 
-
+mtx_t communication_mutex;
 sem_t packet_semaphore;
 mtx_t thread_args_mutex;
 int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
@@ -56,6 +56,7 @@ void * run_client_server(void * arg){
     int                 gai_return;
 
     memset                (&hints,0 ,sizeof hints);
+    init_client_args      (&_client_args);
     hints.ai_family     = AF_UNSPEC;
     hints.ai_socktype   = SOCK_STREAM;
     hints.ai_flags      = AI_PASSIVE;
@@ -124,7 +125,7 @@ void * run_client_server(void * arg){
         char client_connected_string[29] = "client connected to client.\n";
         send(socket_client, client_connected_string, sizeof(client_connected_string), 0);
         _client_args->connected_client_socket = &socket_client;
-        pthread_create(&P2P_thread, NULL, P2P_communication_thread,&_client_args );
+        pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
         pthread_detach(P2P_thread);
 
 
@@ -221,6 +222,7 @@ int initiate_P2P_connection(thread_args * _thread_args){
     client_info_packet client_info_packet_incoming;
     username_packet    username_packet_outgoing;
     client_args     *  _client_args;
+    thread_t           P2P_thread;
 
     if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0){
         perror("connect_to_server() failed." );
@@ -263,12 +265,18 @@ int initiate_P2P_connection(thread_args * _thread_args){
     server_socket = -1;
 
     connect_to_server(&server_socket,client_info_packet_incoming.client_ip, port_number);
+    _client_args->connected_client_socket = &server_socket;
 
     char c_buff[29];
     recv(server_socket,c_buff,sizeof (c_buff), 0);
 
-
     printf("c_buff: %s \n", c_buff);
+    printf("server_socket, about to enter P2P communication thread: %d\n", *_client_args->connected_client_socket);
+    pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
+    pthread_detach(P2P_thread);
+
+
+
 
 
 

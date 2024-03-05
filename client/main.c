@@ -17,6 +17,7 @@ int main(int argc, char*argv[]) {
     }
     sem_init         (&packet_semaphore, 0,0);
     mtx_init         (&thread_args_mutex, mtx_plain);
+    mtx_init         (&communication_mutex,mtx_plain);
     init_thread_args (&trd_args, argc, argv);
 
     if(pthread_create(&client_server_thread, NULL,run_client_server,trd_args) != 0)
@@ -58,6 +59,8 @@ int main(int argc, char*argv[]) {
 
 
     sem_destroy(&packet_semaphore);
+    mtx_destroy(&thread_args_mutex);
+    mtx_destroy(&communication_mutex);
     free(trd_args->ip);
     free(trd_args->port);
     free(trd_args->listening_port);
