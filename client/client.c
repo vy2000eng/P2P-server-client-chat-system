@@ -131,6 +131,7 @@ void * run_client_server(void * arg){
         client_connected_string[26] = '\0';
         send(socket_client, client_connected_string, sizeof(client_connected_string)-1, 0);
         _client_args->connected_client_socket = &socket_client;
+        clear_input_buffer();
         pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
         pthread_detach(P2P_thread);
 
@@ -247,13 +248,14 @@ int initiate_P2P_connection(thread_args * _thread_args){
     int res = recv(server_socket, buf, sizeof (buf)-1, 0);
     buf[res] = '\0'; // Ensure null-termination
     printf("%s\n",buf);
-    clear_input_buffer();
 
 
     if(send_packet (server_socket,&action_packet_outgoing)<0)
     { perror       ("send_packet() failed."); return -1;}
 
     printf         ("Enter Username of Client You Want To Chat With: ");
+    clear_input_buffer();
+
     fgets          (  username_packet_outgoing.user_name, sizeof (username_packet_outgoing.user_name), stdin);
 
     if(send_packet (server_socket, &username_packet_outgoing) < 0 )

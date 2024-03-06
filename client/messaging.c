@@ -84,13 +84,12 @@ void * handle_sending(void * arg)
     thread_return_value              = malloc(sizeof (int));
     //clear_input_buffer();
     printf("TYPE YOU MSG AND PRESS ENTER\n");
-    clear_input_buffer();
 
     while (1)
     {
-        memset(&_message_packet, 0, sizeof (message_packet));
-
         fgets(_message_packet.message, sizeof (_message_packet.message), stdin);
+       //clear_input_buffer();
+
         if(send_packet(*_client_args->connected_client_socket, &_message_packet) < 0)
         {
             perror("sending message failed.\n");
@@ -98,6 +97,8 @@ void * handle_sending(void * arg)
             pthread_exit(thread_return_value);
         }
         printf("msg sent: %s\n", _message_packet.message);
+        memset(&_message_packet, 0, sizeof (message_packet));
+
 
     }
 
