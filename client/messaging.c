@@ -23,8 +23,8 @@ void * P2P_communication_thread(void * arg)
 
     thread_return_value = malloc(sizeof (int));
 
-    printf("inside of P2P communication thread, server socket %d\n", *_client_args->connected_client_socket);
-
+  //  printf("inside of P2P communication thread, server socket %d\n", *_client_args->connected_client_socket);
+   // clear_input_buffer();
     if(pthread_create(&sending_thread, NULL, handle_sending, _client_args)!=0)
     {
         perror("Failed to create thread");
@@ -68,6 +68,7 @@ void * P2P_communication_thread(void * arg)
 
 void * handle_sending(void * arg)
 {
+    //clear_input_buffer();
     client_args  * _client_args;
     message_packet _message_packet;
     int          * thread_return_value;
@@ -77,16 +78,18 @@ void * handle_sending(void * arg)
     _client_args = (client_args*)arg;
     mtx_unlock(&communication_mutex);
 
-    memset(&_message_packet, 0, sizeof (message_packet));
-
+    //memset(&_message_packet, 0, sizeof (message_packet));
 
     _message_packet.packet_type.type = type_message_packet;
     thread_return_value              = malloc(sizeof (int));
+    //clear_input_buffer();
+    printf("TYPE YOU MSG AND PRESS ENTER\n");
+    clear_input_buffer();
 
     while (1)
     {
+        memset(&_message_packet, 0, sizeof (message_packet));
 
-     //   clear_input_buffer();
         fgets(_message_packet.message, sizeof (_message_packet.message), stdin);
         if(send_packet(*_client_args->connected_client_socket, &_message_packet) < 0)
         {
@@ -95,7 +98,6 @@ void * handle_sending(void * arg)
             pthread_exit(thread_return_value);
         }
         printf("msg sent: %s\n", _message_packet.message);
-        memset(&_message_packet, 0, sizeof (message_packet));
 
     }
 
@@ -105,6 +107,7 @@ void * handle_sending(void * arg)
 
 void * handle_receiving(void * arg)
 {
+    //clear_input_buffer();
     client_args * _client_args;
     message_packet _message_packet;
     int          * thread_return_value;
@@ -128,6 +131,7 @@ void * handle_receiving(void * arg)
             *thread_return_value = -1;
             pthread_exit(thread_return_value);
         }
+     //   clear_input_buffer();
         printf("msg received: %s\n",_message_packet.message);
         memset(&_message_packet, 0, sizeof (message_packet));
 

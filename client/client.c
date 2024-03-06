@@ -127,8 +127,9 @@ void * run_client_server(void * arg){
     while(1){
         socket_client = accept(listening_socket, (struct sockaddr*)&their_addr, (socklen_t*) &addr_len);
         if(socket_client < 0){accept_failure = -1; break;}
-        char client_connected_string[29] = "client connected to client.\n";
-        send(socket_client, client_connected_string, sizeof(client_connected_string), 0);
+        char client_connected_string[27] = "client connected to client";
+        client_connected_string[26] = '\0';
+        send(socket_client, client_connected_string, sizeof(client_connected_string)-1, 0);
         _client_args->connected_client_socket = &socket_client;
         pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
         pthread_detach(P2P_thread);
@@ -183,7 +184,7 @@ int establish_presence_with_server(thread_args * _thread_args){
     char                buf[18];
     int                 server_socket;
 
-    memset(&username_packet_outgoing, 0 , sizeof (action_packet_outgoing));
+    memset(&action_packet_outgoing, 0 , sizeof (action_packet));
     memset(&port_packet_outgoing, 0, sizeof(port_packet));
     memset(&username_packet_outgoing,  0,sizeof (username_packet));
 
@@ -199,9 +200,9 @@ int establish_presence_with_server(thread_args * _thread_args){
     }
 
     // confirming connection by receiving "client connected." from server.
-    int res = recv(server_socket, buf, sizeof buf, 0);
+    int res = recv(server_socket, buf, sizeof (buf), 0);
     buf[res] = '\0'; // Ensure null-termination
-    printf("%s", buf);
+    printf("%s\n", buf);
 
     if(send_packet (server_socket,&action_packet_outgoing)<0)
     { perror       ("send_packet() failed."); return -1;}
@@ -221,7 +222,7 @@ int establish_presence_with_server(thread_args * _thread_args){
 
 int initiate_P2P_connection(thread_args * _thread_args){
     int                server_socket;
-    char               buf[19];
+    char               buf[18];
     char               port_number[6];
     bool               init_connection;
     action_packet      action_packet_outgoing;
@@ -242,12 +243,12 @@ int initiate_P2P_connection(thread_args * _thread_args){
     action_packet_outgoing.action                = 1;
     init_connection                              = true;
     // confirming connection by receiving "client connected." from server.
-   // clear_input_buffer();
-    int res = recv(server_socket, buf, sizeof (buf), 0);
+    //clear_input_buffer();
+    int res = recv(server_socket, buf, sizeof (buf)-1, 0);
     buf[res] = '\0'; // Ensure null-termination
+    printf("%s\n",buf);
     clear_input_buffer();
 
-    printf("%s",buf);
 
     if(send_packet (server_socket,&action_packet_outgoing)<0)
     { perror       ("send_packet() failed."); return -1;}
@@ -271,12 +272,15 @@ int initiate_P2P_connection(thread_args * _thread_args){
     connect_to_server(&server_socket,client_info_packet_incoming.client_ip, port_number);
     _client_args->connected_client_socket = &server_socket;
 
-    char c_buff[29];
-    recv(server_socket,c_buff,sizeof (c_buff), 0);
+    char c_buff[27];
+    int bytes = recv(server_socket,c_buff,sizeof (c_buff)-1, 0);
+    c_buff[bytes] ='\0';
+    //clear_input_buffer();
+
 
     printf("c_buff: %s \n", c_buff);
+  //  printf("server_socket, about to enter P2P communication thread: %d\n", *_client_args->connected_client_socket);
  //   clear_input_buffer();
-    printf("server_socket, about to enter P2P communication thread: %d\n", *_client_args->connected_client_socket);
     pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
     pthread_detach(P2P_thread);
 

@@ -77,14 +77,15 @@ void * connected_client_thread(void * arg)
     port_packet_incoming.packet_type.type          = type_port_packet;
     username_name_packet_incoming.packet_type.type = type_username_packet;
 
-    char client_connected_string[17]               = "client connected.";
+    char client_connected_string[18]               = "client connected.";
+    client_connected_string[17] = '\0';
 
 
     mtx_lock      (&client_arr_mutex);
     s_trd_args =  (server_thread_args*)arg;
     mtx_unlock    (&client_arr_mutex);
 
-    send          (s_trd_args->socket, client_connected_string, sizeof(client_connected_string), 0);
+    send          (s_trd_args->socket, client_connected_string, sizeof(client_connected_string)-1, 0);
     if(receive_packet(s_trd_args->socket, &action_packet_incoming)<0)
     {perror("receive_packet(&action_packet_incoming) failed.");}
 
