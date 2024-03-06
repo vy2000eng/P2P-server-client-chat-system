@@ -1,9 +1,13 @@
 #include "client.h"
 
-
+mtx_t communication_mutex;
 sem_t packet_semaphore;
+sem_t messaging_semaphore;
 mtx_t thread_args_mutex;
-int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
+
+
+int init_thread_args(thread_args ** _thread_args,int argc, char ** argv)
+{
     size_t            len_of_argv_1;
     size_t            len_of_argv_2;
     len_of_argv_1   = strlen(argv[1]);
@@ -13,14 +17,14 @@ int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
 
     // you need to free ip and port before you free _thread args, or else you'll have a memory leak
     *_thread_args                        = malloc(sizeof(thread_args));
-    if(*_thread_args == NULL){ printf("Failed to allocate memory.\n"); return 1;}
+    if(*_thread_args == NULL){ printf("Failed to allocate memory.\n"); return -1;}
     (*_thread_args)   -> ip              = (char *) malloc(len_of_argv_1+1);
     (*_thread_args)   -> port            = (char *) malloc(len_of_argv_2+1);
     (*_thread_args)   ->listening_port   = (int  *) malloc(sizeof(int));
     if((*_thread_args)->ip   == NULL  ||
        (*_thread_args)->port == NULL  ||
        (*_thread_args)->listening_port == NULL)
-    {printf("Failed to allocate memory.\n"); return 1;};
+    {printf("Failed to allocate memory.\n"); return -1;};
 
     strcpy((*_thread_args)->ip,argv[1]);
     strcpy((*_thread_args)->port,argv[2]);
@@ -28,12 +32,11 @@ int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
     return 0;
 }
 
-int init_client_args(client_args ** _client_args){
+int init_client_args(client_args ** _client_args)
+{
     *_client_args = malloc(sizeof(client_args));
-    if(*_client_args == NULL){ printf("Failed to allocate memory.\n"); return 1;}
+    if(*_client_args == NULL){ printf("Failed to allocate memory.\n"); return -1;}
     return 0;
-
-
 }
 
 
@@ -44,7 +47,9 @@ void * run_client_server(void * arg){
     struct addrinfo     *res;
     struct sockaddr     their_addr;
     struct sockaddr_in  sin;
+    thread_t            P2P_thread;
     thread_args     *   _thread_args;
+    client_args     *   _client_args;
     int             *   thread_return_value;
     int                 accept_failure;
     int                 listening_socket;
@@ -54,6 +59,7 @@ void * run_client_server(void * arg){
     int                 gai_return;
 
     memset                (&hints,0 ,sizeof hints);
+    init_client_args      (&_client_args);
     hints.ai_family     = AF_UNSPEC;
     hints.ai_socktype   = SOCK_STREAM;
     hints.ai_flags      = AI_PASSIVE;
@@ -63,9 +69,8 @@ void * run_client_server(void * arg){
     enable              = 1;
     accept_failure      = 0;
 
-
-
-    if(gai_return != 0){
+    if(gai_return != 0)
+    {
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(gai_return));
         freeaddrinfo(res);
         *thread_return_value = -1;
@@ -82,7 +87,8 @@ void * run_client_server(void * arg){
         pthread_exit(thread_return_value);
     }
 
-    if (setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+    if (setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+    {
         perror("setsockopt(SO_REUSEADDR) failed");
         freeaddrinfo(res);
         *thread_return_value = -1;
@@ -98,11 +104,14 @@ void * run_client_server(void * arg){
     }
 
     socklen_t len = sizeof(sin);
-    if (getsockname(listening_socket, (struct sockaddr *)&sin, &len) == -1) {
+    if (getsockname(listening_socket, (struct sockaddr *)&sin, &len) == -1)
+    {
         perror("getsockname() failed");
         *thread_return_value = -1;
         pthread_exit(thread_return_value);
-    } else {
+    }
+    else
+    {
         printf("LISTENING PORT NUMBER: %d\n", ntohs(sin.sin_port));
         //this is muy importante
         *_thread_args->listening_port = ntohs(sin.sin_port);
@@ -116,12 +125,17 @@ void * run_client_server(void * arg){
     }
     sem_post(&packet_semaphore);
 
-    while(1){
+    while(1)
+    {
         socket_client = accept(listening_socket, (struct sockaddr*)&their_addr, (socklen_t*) &addr_len);
         if(socket_client < 0){accept_failure = -1; break;}
-        char client_connected_string[29] = "client connected to client.\n";
-        send(socket_client, client_connected_string, sizeof(client_connected_string), 0);
-
+        char client_connected_string[27] = "client connected to client";
+        client_connected_string[26] = '\0';
+        send(socket_client, client_connected_string, sizeof(client_connected_string)-1, 0);
+        _client_args->connected_client_socket = &socket_client;
+        clear_input_buffer();
+        pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
+        pthread_detach(P2P_thread);
     }
 
     //later there will be an exit condition which won't that is not a failure.
@@ -129,7 +143,8 @@ void * run_client_server(void * arg){
     pthread_exit(thread_return_value);
 }
 
-int connect_to_server(int * server_socket, char * ip ,char *  port){
+int connect_to_server(int * server_socket, char * ip ,char *  port)
+{
     struct              addrinfo hints;
     struct              addrinfo *res;
     int                 gai_return;
@@ -161,7 +176,8 @@ int connect_to_server(int * server_socket, char * ip ,char *  port){
 
 }
 
-int establish_presence_with_server(thread_args * _thread_args){
+int establish_presence_with_server(thread_args * _thread_args)
+{
     sem_wait(&packet_semaphore);
 
     action_packet       action_packet_outgoing;
@@ -170,7 +186,7 @@ int establish_presence_with_server(thread_args * _thread_args){
     char                buf[18];
     int                 server_socket;
 
-    memset(&username_packet_outgoing, 0 , sizeof (action_packet_outgoing));
+    memset(&action_packet_outgoing, 0 , sizeof (action_packet));
     memset(&port_packet_outgoing, 0, sizeof(port_packet));
     memset(&username_packet_outgoing,  0,sizeof (username_packet));
 
@@ -186,9 +202,9 @@ int establish_presence_with_server(thread_args * _thread_args){
     }
 
     // confirming connection by receiving "client connected." from server.
-    int res = recv(server_socket, buf, sizeof buf, 0);
+    int res = recv(server_socket, buf, sizeof (buf), 0);
     buf[res] = '\0'; // Ensure null-termination
-    printf("%s", buf);
+    printf("%s\n", buf);
 
     if(send_packet (server_socket,&action_packet_outgoing)<0)
     { perror       ("send_packet() failed."); return -1;}
@@ -206,40 +222,44 @@ int establish_presence_with_server(thread_args * _thread_args){
     return 0;
 }
 
-int initiate_P2P_connection(thread_args * _thread_args){
+int initiate_P2P_connection(thread_args * _thread_args)
+{
     int                server_socket;
-    char               buf[19];
+    int                bytes;
+    char               buf[18];
     char               port_number[6];
+    char               c_buff[27];
+
     action_packet      action_packet_outgoing;
     client_info_packet client_info_packet_incoming;
     username_packet    username_packet_outgoing;
     client_args     *  _client_args;
+    thread_t           P2P_thread;
 
-    if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0){
+    if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0)
+    {
         perror("connect_to_server() failed." );
         return -1;
     }
+
     memset          (&username_packet_outgoing, 0 , sizeof(username_packet));
-    init_client_args(&_client_args);
+    init_client_args(&_client_args); // freed inside P2P_communication_thread
     action_packet_outgoing.packet_type.type      = type_action_packet;
     client_info_packet_incoming.packet_type.type = type_client_info_packet;
     username_packet_outgoing.packet_type.type    = type_username_packet;
     action_packet_outgoing.action                = 1;
-    // confirming connection by receiving "client connected." from server.
-   // clear_input_buffer();
-    int res = recv(server_socket, buf, sizeof (buf), 0);
-    buf[res] = '\0'; // Ensure null-termination
-    clear_input_buffer();
 
-    printf("%s",buf);
+    int res = recv(server_socket, buf, sizeof (buf)-1, 0);
+    buf[res] = '\0'; // Ensure null-termination
+    printf("%s\n",buf);
 
 
     if(send_packet (server_socket,&action_packet_outgoing)<0)
     { perror       ("send_packet() failed."); return -1;}
 
-
-
     printf         ("Enter Username of Client You Want To Chat With: ");
+
+    clear_input_buffer();
     fgets          (  username_packet_outgoing.user_name, sizeof (username_packet_outgoing.user_name), stdin);
 
     if(send_packet (server_socket, &username_packet_outgoing) < 0 )
@@ -256,36 +276,29 @@ int initiate_P2P_connection(thread_args * _thread_args){
     server_socket = -1;
 
     connect_to_server(&server_socket,client_info_packet_incoming.client_ip, port_number);
+    _client_args->connected_client_socket = &server_socket;
 
-    char c_buff[29];
-    recv(server_socket,c_buff,sizeof (c_buff), 0);
+    bytes = recv(server_socket,c_buff,sizeof (c_buff)-1, 0);
+    c_buff[bytes] ='\0';
     printf("c_buff: %s \n", c_buff);
-
-
-
+    pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
+    pthread_detach(P2P_thread);
     return 0;
 }
 
-void print_client_info(client_info_packet * clientInfoPacket){
+void print_client_info(client_info_packet * clientInfoPacket)
+{
     printf("client username: %s", clientInfoPacket->username );
     printf("client ip: %s\n", clientInfoPacket->client_ip);
     printf("client port: %d\n\n", clientInfoPacket->port);
 }
 
-void clear_input_buffer(){
+void clear_input_buffer()
+{
     int c;
     while ((c = getchar()) != '\n' && c != EOF) { /* discard */ }
 
 }
-
-//void check_buffer(){
-//    int c;
-//    printf("Buffer state before fgets: ");
-//    while ((c = getchar()) != '\n' && c != EOF) {
-//        putchar(c); // Print the leftover characters in the buffer
-//    }
-//    printf("\nAfter buffer check\n");
-//}
 
 
 

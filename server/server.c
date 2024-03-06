@@ -1,27 +1,30 @@
 #include "server.h"
 extern mtx_t client_arr_mutex;
 // this is a temporary solution,just to get the main functionality working
-void init_array(clients_arr *clientsArr){
+void init_array(clients_arr *clientsArr)
+{
     memset(clientsArr,0,sizeof (*clientsArr));
     clientsArr->size = 0;
-
-
 }
 
 // this is a temporary solution,just to get the main functionality working
-bool insert_client(client_info_packet * clientInfoPacket,clients_arr *clientsArr){
-    if(clientsArr->size > 127){
+bool insert_client(client_info_packet * clientInfoPacket,clients_arr *clientsArr)
+{
+    if(clientsArr->size > 127)
+    {
         return false;
-    }else{
+    }
+    else
+    {
         clientsArr->client[clientsArr->size ++] = *clientInfoPacket;
         return true;
-
     }
-
 }
 
-client_info_packet * retrieve_client_from_arr(char * username ,clients_arr* _client_arr){
-    for(int i = 0; i < _client_arr->size;i++){
+client_info_packet * retrieve_client_from_arr(char * username ,clients_arr* _client_arr)
+{
+    for(int i = 0; i < _client_arr->size;i++)
+    {
         if(strcmp(  _client_arr->client[i].username, username) == 0)
         {return &_client_arr->client[i];}
     }
@@ -29,7 +32,8 @@ client_info_packet * retrieve_client_from_arr(char * username ,clients_arr* _cli
 }
 
 
-int init_thread_args(server_thread_args ** s_trd_args,clients_arr * connected_clients_arr, int socket_client,client_info_packet * client_info_packet_incoming ){
+int init_thread_args(server_thread_args ** s_trd_args,clients_arr * connected_clients_arr, int socket_client,client_info_packet * client_info_packet_incoming )
+{
     *s_trd_args    = malloc(sizeof (server_thread_args));
     if(*s_trd_args == NULL){ printf("Failed to allocate memory.\n"); return 1;}
     (*s_trd_args)->socket                   = socket_client;
@@ -41,7 +45,8 @@ int init_thread_args(server_thread_args ** s_trd_args,clients_arr * connected_cl
 
 }
 
-void set_client_address(int client_socket_fd, client_info_packet * client_info_packet) {
+void set_client_address(int client_socket_fd, client_info_packet * client_info_packet)
+{
     struct    sockaddr_in addr;
     socklen_t addr_size;
     char      client_ip[INET_ADDRSTRLEN]; // Buffer to store the IP address
@@ -77,14 +82,15 @@ void * connected_client_thread(void * arg)
     port_packet_incoming.packet_type.type          = type_port_packet;
     username_name_packet_incoming.packet_type.type = type_username_packet;
 
-    char client_connected_string[17]               = "client connected.";
+    char client_connected_string[18]               = "client connected.";
+    client_connected_string[17] = '\0';
 
 
     mtx_lock      (&client_arr_mutex);
     s_trd_args =  (server_thread_args*)arg;
     mtx_unlock    (&client_arr_mutex);
 
-    send          (s_trd_args->socket, client_connected_string, sizeof(client_connected_string), 0);
+    send          (s_trd_args->socket, client_connected_string, sizeof(client_connected_string)-1, 0);
     if(receive_packet(s_trd_args->socket, &action_packet_incoming)<0)
     {perror("receive_packet(&action_packet_incoming) failed.");}
 

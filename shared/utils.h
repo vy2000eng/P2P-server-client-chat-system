@@ -46,8 +46,7 @@ typedef struct
 typedef struct message_packet
 {
     base_packet packet_type;
-    int         recipient_socket;
-    char        message[1024];
+    char        message[256];
 } message_packet;
 
 typedef struct port_packet

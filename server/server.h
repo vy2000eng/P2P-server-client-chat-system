@@ -18,7 +18,6 @@
 
 
 typedef struct client_arr{
-    // client      clients [128];
     client_info_packet client[128];
     int                size;
 }clients_arr;
@@ -29,23 +28,15 @@ typedef struct server_thread_args{
     clients_arr        * connected_clients_arr;
 }server_thread_args;
 
-void   init_array(clients_arr *clientsArr);
-
-client_info_packet * retrieve_client_from_arr(char * username ,clients_arr* _client_arr);
-
-void   print_client_info(client_info_packet *clientInfoPacket);
-
-void * connected_client_thread(void * arg);
-
-int    set_up_server(int * listening_socket);
-
-int    listen_for_connection(const int * listening_socket);
-
-void   set_client_address(int client_socket, client_info_packet * client_info_packet_incoming);
-
-bool   insert_client(client_info_packet * clientInfoPacket,clients_arr *clientsArr);
-
-int    init_thread_args(server_thread_args ** s_trd_args,clients_arr * connected_clients_arr, int socket_client, client_info_packet * client_info_packet_incoming );
+void                 init_array               (clients_arr *clientsArr);
+client_info_packet * retrieve_client_from_arr (char * username ,clients_arr* _client_arr);
+void                 print_client_info        (client_info_packet *clientInfoPacket);
+void               * connected_client_thread  (void * arg);
+int                  set_up_server            (int * listening_socket);
+int                  listen_for_connection    (const int * listening_socket);
+void                 set_client_address       (int client_socket, client_info_packet * client_info_packet_incoming);
+bool                 insert_client            (client_info_packet * clientInfoPacket,clients_arr *clientsArr);
+int                  init_thread_args         (server_thread_args ** s_trd_args,clients_arr * connected_clients_arr, int socket_client, client_info_packet * client_info_packet_incoming );
 
 
 
