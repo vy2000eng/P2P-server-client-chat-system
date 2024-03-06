@@ -2,7 +2,10 @@
 
 mtx_t communication_mutex;
 sem_t packet_semaphore;
+sem_t messaging_semaphore;
 mtx_t thread_args_mutex;
+
+
 int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
     size_t            len_of_argv_1;
     size_t            len_of_argv_2;
@@ -30,7 +33,7 @@ int init_thread_args(thread_args ** _thread_args,int argc, char ** argv){
 
 int init_client_args(client_args ** _client_args){
     *_client_args = malloc(sizeof(client_args));
-    if(*_client_args == NULL){ printf("Failed to allocate memory.\n"); return -11;}
+    if(*_client_args == NULL){ printf("Failed to allocate memory.\n"); return -1;}
     return 0;
 
 
@@ -48,6 +51,7 @@ void * run_client_server(void * arg){
     thread_args     *   _thread_args;
     client_args     *   _client_args;
     int             *   thread_return_value;
+    bool                init_connection;
     int                 accept_failure;
     int                 listening_socket;
     int                 socket_client;
@@ -57,6 +61,7 @@ void * run_client_server(void * arg){
 
     memset                (&hints,0 ,sizeof hints);
     init_client_args      (&_client_args);
+    init_connection     = false;
     hints.ai_family     = AF_UNSPEC;
     hints.ai_socktype   = SOCK_STREAM;
     hints.ai_flags      = AI_PASSIVE;
@@ -218,6 +223,7 @@ int initiate_P2P_connection(thread_args * _thread_args){
     int                server_socket;
     char               buf[19];
     char               port_number[6];
+    bool               init_connection;
     action_packet      action_packet_outgoing;
     client_info_packet client_info_packet_incoming;
     username_packet    username_packet_outgoing;
@@ -229,11 +235,12 @@ int initiate_P2P_connection(thread_args * _thread_args){
         return -1;
     }
     memset          (&username_packet_outgoing, 0 , sizeof(username_packet));
-    init_client_args(&_client_args);
+    init_client_args(&_client_args); // freed inside P2P_communication_thread
     action_packet_outgoing.packet_type.type      = type_action_packet;
     client_info_packet_incoming.packet_type.type = type_client_info_packet;
     username_packet_outgoing.packet_type.type    = type_username_packet;
     action_packet_outgoing.action                = 1;
+    init_connection                              = true;
     // confirming connection by receiving "client connected." from server.
    // clear_input_buffer();
     int res = recv(server_socket, buf, sizeof (buf), 0);
@@ -242,11 +249,8 @@ int initiate_P2P_connection(thread_args * _thread_args){
 
     printf("%s",buf);
 
-
     if(send_packet (server_socket,&action_packet_outgoing)<0)
     { perror       ("send_packet() failed."); return -1;}
-
-
 
     printf         ("Enter Username of Client You Want To Chat With: ");
     fgets          (  username_packet_outgoing.user_name, sizeof (username_packet_outgoing.user_name), stdin);
@@ -271,6 +275,7 @@ int initiate_P2P_connection(thread_args * _thread_args){
     recv(server_socket,c_buff,sizeof (c_buff), 0);
 
     printf("c_buff: %s \n", c_buff);
+ //   clear_input_buffer();
     printf("server_socket, about to enter P2P communication thread: %d\n", *_client_args->connected_client_socket);
     pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
     pthread_detach(P2P_thread);

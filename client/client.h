@@ -23,6 +23,7 @@
 extern sem_t packet_semaphore;
 extern mtx_t thread_args_mutex;
 
+
 typedef struct thread_args{
     char * ip;
     char * port;
