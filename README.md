@@ -1,186 +1,115 @@
+# Project Compilation Instructions
 
-client compilation:
+## Compilation Commands
+
+### Client Compilation
 gcc client/client.c client/main.c client/greeting.c client/messaging.c shared/utils.c -o client/cli -pthread
 
-server compilation:
+### Server Compilation
 gcc server/server.c server/main.c shared/utils.c -o server/ser -pthread
 
-************************************************************THE CLIENT**************************************************************************
-************************************************************************************************************************************************
-client:
-general overview:
-    -   The client is responsible for Three things:
-        First, it establishes a listening socket that is used for accepting other client connections.
-        Second, it establishes a connection with the server, and sends the port that was assigned to the listening socket.
-        Third, if the client chooses, connect to another client, or just listen for connections.
+Client
+General Overview
 
-technical overview:
-    extern sem_t packet_semaphore;
-    extern mtx_t thread_args_mutex;
+The client is responsible for three main functions:
 
-    typedef struct thread_args{
-        char * ip;
-        char * port;
-    }thread_args;
+    Establishing a listening socket for accepting other client connections.
+    Connecting to the server and sending the port assigned to the listening socket.
+    Optionally, connecting to another client or just listening for connections.
 
-    int init_thread_args(thread_args ** _thread_args,int argc, char ** argv);
-        -   initializes the strings inside of thread_args that are passed in via command line args
+Technical Overview
 
-    void * run_client_server   (void * arg);
-        -   thread that listens for incoming connections on the client.
+    Semaphore and Mutex:
+        extern sem_t packet_semaphore;
+        extern mtx_t thread_args_mutex;
 
+    Struct Definitions:
+        typedef struct thread_args{
+        char *ip;
+        char *port;
+        } thread_args;
 
-     connect_to_main_server():
-        -   Connects to the server in ../server/main.c "run_server()", on the port that server is listening on.
-            For now, you need to specify it via program args ./cli 127.0.0.1 3048.
+Function Descriptions:
 
-        -   Leaves a record of the client in the server application of who exactly the client is.
-            This is so that other clients can request it and use that information to connect to it later.
+    int init_thread_args(thread_args **_thread_args, int argc, char **argv);
+        Initializes thread_args strings from command line arguments.
 
-    void * establish_presence_with_server (void * arg);
-        -   logs the client for later retrieval by other clients
+    void *run_client_server(void *arg);
+        Thread that listens for incoming connections on the client.
 
-    int connect_to_server(int * server_socket, char * ip ,char *  port);
-        -   can be used to connect to anything given the port and ip.
+    connect_to_main_server();
+        Connects to the server's run_server() function, specifying the IP and port via program arguments (e.g., ./cli 127.0.0.1 3048).
 
-    int initiate_P2P_connection(thread_args * _thread_args);
-        -   initiates the P2P connection by requesting client from the server and then connecting to that client using provided
-            information.
+    void *establish_presence_with_server(void *arg);
+        Logs the client for later retrieval by other clients.
+
+    int connect_to_server(int *server_socket, char *ip, char *port);
+        Connects to a server given the IP and port.
+
+    int initiate_P2P_connection(thread_args *_thread_args);
+        Initiates a P2P connection by requesting client information from the server.
 
     void clear_input_buffer();
-        -   solving some weird buffer issues and fgets not blocking.
+        Addresses buffer issues and ensures fgets blocks as expected.
 
+Server
+General Overview
 
+The server listens on a port for client connections, storing information necessary for clients to connect to each other. Future implementations will allow clients to request specific client information for direct connections.
+Technical Overview
 
-************************************************************THE SERVER**********************************************************************************
-********************************************************************************************************************************************************
-server:
-general overview
-    -   The server is responsible for listening on a port and receiving a client connections.
-        The server stores the client information necessary for a client to make a connection to another client.
-        This is not implemented yet, but eventually a client will be able to request the information of a specific client,
-        and connect to that client directly.
+    Struct Definitions:
+        typedef struct client_arr and typedef struct server_thread_args:
+            Store client information and track the number of connected clients.
 
-technical_overview:
-typedef struct client_arr:
-    - Stores client_info_packet.
-    - keeps track of how many clients there are.
+    Function Descriptions:
 
-typedef struct server_thread_args:
-    -   These are the argument that are passed into the void * connected_client_thread(void * arg);
-    -   The socket, client_info_packet, and connected_client_arr get assigned in init_thread_args.
+        void init_array(clients_arr *clientsArr);
+            Initializes the client array.
 
-void init_array(clients_arr *clientsArr):
-    -   Clears the array, and set the size to 0
+        int run_server();
+            Starts the server, listens for connections, and handles client threads.
 
-int run_server():
-    -   Initializes the client_arr, server_thread_args, and establishes the client address, and port.
-    -   Listens for client connections and starts the connected_client_thread.
-    -   The thread is detached because if it was waiting for it to finish; it wouldn't be able to accept another connection.
+        void *connected_client_thread(void *arg);
+            Handles connected clients, receiving and storing their information.
 
-void * connected_client_thread(void * arg):
-    -   Sends a message to the client confirming that the connection to the server has benn established.
-    -   Receives the username of the client that is connected.
-    -   Fills in the username for the client_info_packet, and inserts it into the connected_clients_arr.
-    -   For right now, closes the socket, and frees the memory for the args.
+        void set_client_address(int client_socket, client_info_packet *client_info_packet_incoming);
+            Retrieves and sets the connected client's address information.
 
-void set_client_address(int client_socket, client_info_packet * client_info_packet_incoming):
-    -   Sets the client address by filling out the sockaddr_in struct using the getpeername() function.
-    -   The ip and port are retrieved using the sin_addr and sin_port attributes of the sockaddr_in struct,
-        and are subsequently assigned and copied into the client_info_packet.port, and client_info_packet.client_ip struct.
+Shared
+General Overview
 
+The shared directory encapsulates all the necessary packets for client-server communication within this project. As the project evolves, the utilization and definition of packets are subject to updates. Currently, the following packet types are actively used:
 
+    packet_type
+    base_packet
+    username_packet
+    client_info_packet
+    
 
-typedef struct client_arr{
-    client_info_packet client[128];
-    int                size;
-}clients_arr;
+Further updates will include a comprehensive list of utilized packets as new implementations are introduced.
 
-typedef struct server_thread_args{
-    int socket;
-    client_info_packet * client_info_packet_na;
-    clients_arr        * connected_clients_arr;
-}server_thread_args;
+Packet Definitions
 
-void init_array(clients_arr *clientsArr);
+    packet_type:
+    Defines the range of packet types utilized for client-server interactions, enabling streamlined packet processing and handling.
 
-void print_client_info(client_info_packet *clientInfoPacket);
+    base_packet:
+    A foundational packet structure that includes essential information such as packet type and length. 
+    Every packet constructed in this project starts with a base_packet to ensure uniformity and predictability in data handling.
+    
+    username_packet: 
+    Incorporates a base_packet and specifies the username set by the client. 
+    This packet is sent to the server, which then transfers the username information into a client_info_packet for further processing.
 
-void * connected_client_thread(void * arg);
-
-int set_up_server();
-
-void set_client_address(int client_socket, client_info_packet * client_info_packet_incoming);
-
-bool insert_client(client_info_packet * clientInfoPacket,clients_arr *clientsArr);
-
-int init_thread_args(server_thread_args ** s_trd_args,clients_arr * connected_clients_arr, int socket_client, client_info_packet * client_info_packet_incoming );
-
-***********************************************************SHARED***************************************************************************************
-********************************************************************************************************************************************************
-
-shared:
-general overview:
-    -   This directory has all the packets that are required for client server communication.
-        There are currently more packets defined than are being used, but I'll update the comprehensive list of the packets being used as I make and use them.
-        For right now the packet that are being used in this project are:
-        packet_type,
-        base_packet,
-        username_packet,
-        client_info_packet
-
-technical overview:
-
-packet_type:
-    -   Even though this isn't really a packet, this is being used to determine the packet types, as stated previously the only ones being used
-        at the time of this commit are username_packet and client_info_packet
-
-base_packet:
-    -   This packet is included in every packet that is constructed. It is used to determine what kind of packet is being sent or received, and the length in bytes of every packet.
-
-username_packet:
-    -   This packet includes the base_packet, and the username that is set by the client, and sent to the server.
-        After the server receives this packet. The username for this packet is then copied into a client_info_packet.
-
-client_info_packet:
-    -   The port and client_ip are filled as soon as the server makes a connection with the client via get_peer_name().
-        The username is later filled after the client sends it. This packet then gets stored into the client_arr struct, which for now allocates 128 instances of client_info_packet on the stack.
-        This is just a preliminary version I eventually would like to refactor this into a sqllite db, and probably add some sort uuid.
-
-action_packet:
-    - used for branching off different actions in the server. When the client is establishing its presence the value is 0.
-    - When the client is retrieving another client, the value is 1.
-
-typedef enum
-{
-    type_username_packet,
-    type_connected_clients_packet,
-    type_message_packet,
-    type_client_info_packet
-} packet_type;
-
-typedef struct base_packet
-{
-    ssize_t     length;
-    packet_type type;
-}base_packet;
-
-
-typedef struct username_packet
-{
-    base_packet packet_type;
-    char        user_name[256];
-} username_packet;
-
-
-typedef  struct client_info_packet {
-    base_packet packet_type;
-    int         port;
-    char        client_ip [INET_ADDRSTRLEN];
-    char        username       [256];
-}  __attribute__((packed)) client_info_packet;
-
-
-
-
+    client_info_packet: 
+    Filled immediately upon the server's connection with a client, specifying the client's IP and port. 
+    The username is added subsequently after its transmission by the client. 
+    This packet is pivotal for enabling direct client-to-client connections and is initially stored in a client_arr structure.
+    Future iterations may migrate this data to a more scalable storage solution, such as SQLite, along with additional identification methods.
+    
+    action_packet: 
+    Utilized for delineating various server actions based on the client's requests, such as establishing presence (value 0) or retrieving another client's information for a P2P connection (value 1).
+    
+    
 
