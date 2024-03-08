@@ -1,6 +1,5 @@
 # Project Compilation Instructions
 
-## Compilation Commands
 
 ### Client Compilation
 gcc client/client.c client/main.c client/greeting.c client/messaging.c shared/utils.c -o client/cli -pthread
