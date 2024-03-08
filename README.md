@@ -28,18 +28,18 @@ Technical Overview
         } thread_args;
 
 Function Descriptions:
-    '''c
+    ```c
     int init_thread_args(thread_args **_thread_args, int argc, char **argv);
         //Initializes thread_args strings from command line arguments.
-    '''c
+
     void *run_client_server(void *arg);
         //Thread that listens for incoming connections on the client.
-    '''c
+
     connect_to_main_server();
-        Connects to the server's run_server() function, specifying the IP and port via program arguments (e.g., ./cli 127.0.0.1 3048).
-    '''c
+        //Connects to the server's run_server() function, specifying the IP and port via program arguments (e.g., ./cli 127.0.0.1 3048).
+
     void *establish_presence_with_server(void *arg);
-        Logs the client for later retrieval by other clients.
+       //Logs the client for later retrieval by other clients.
 
     int connect_to_server(int *server_socket, char *ip, char *port);
         Connects to a server given the IP and port.
