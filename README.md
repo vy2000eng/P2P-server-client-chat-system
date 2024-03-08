@@ -1,13 +1,12 @@
-# Project Compilation Instructions
+### Project Compilation Instructions
 
-
-### Client Compilation
+#### Client Compilation
 gcc client/client.c client/main.c client/greeting.c client/messaging.c shared/utils.c -o client/cli -pthread
 
-### Server Compilation
+#### Server Compilation
 gcc server/server.c server/main.c shared/utils.c -o server/ser -pthread
 
-Client
+### Client
 General Overview
 
 The client is responsible for three main functions:
@@ -29,16 +28,16 @@ Technical Overview
         } thread_args;
 
 Function Descriptions:
-
+    '''c
     int init_thread_args(thread_args **_thread_args, int argc, char **argv);
-        Initializes thread_args strings from command line arguments.
-
+        //Initializes thread_args strings from command line arguments.
+    '''c
     void *run_client_server(void *arg);
-        Thread that listens for incoming connections on the client.
-
+        //Thread that listens for incoming connections on the client.
+    '''c
     connect_to_main_server();
         Connects to the server's run_server() function, specifying the IP and port via program arguments (e.g., ./cli 127.0.0.1 3048).
-
+    '''c
     void *establish_presence_with_server(void *arg);
         Logs the client for later retrieval by other clients.
 
@@ -51,7 +50,7 @@ Function Descriptions:
     void clear_input_buffer();
         Addresses buffer issues and ensures fgets blocks as expected.
 
-Server
+## Server
 General Overview
 
 The server listens on a port for client connections, storing information necessary for clients to connect to each other. Future implementations will allow clients to request specific client information for direct connections.
@@ -75,7 +74,7 @@ Technical Overview
         void set_client_address(int client_socket, client_info_packet *client_info_packet_incoming);
             Retrieves and sets the connected client's address information.
 
-Shared
+## Shared
 General Overview
 
 The shared directory encapsulates all the necessary packets for client-server communication within this project. As the project evolves, the utilization and definition of packets are subject to updates. Currently, the following packet types are actively used:
