@@ -8,11 +8,14 @@ gcc server/server.c server/main.c shared/utils.c -o server/ser -pthread
 
 ### /client
 ### General Overview
-    The client component of this application is crafted to handle peer-to-peer (P2P) communications, connecting to a server to register its presence and then initiating or receiving connections for direct messaging between clients. 
-    This setup enables clients to communicate directly with each other, bypassing the server after initial connection setup, thereby facilitating real-time message exchanges.
+    The client component of this application is crafted to handle peer-to-peer (P2P) communications, connecting 
+    to a server to register its presence and then initiating or receiving connections for direct messaging between clients. 
+    This setup enables clients to communicate directly with each other, bypassing the server after initial connection 
+    setup, thereby facilitating real-time message exchanges.
 
 ### Technical Overview
-#### /client/client.h
+#### function descriptions
+##### /client/client.h
     init_thread_args: 
     Prepares and initializes the client's configuration, including IP and port, based on command-line arguments. 
     This function is crucial for setting up the client's network parameters.
@@ -25,22 +28,23 @@ gcc server/server.c server/main.c shared/utils.c -o server/ser -pthread
     Connects to the central server to register the client's details, including its listening port. 
     This registration allows other clients to retrieve the necessary information to establish a direct P2P connection.
 
-#### /client/messaging.h
-    P2P_communication_thread Function: 
+##### /client/messaging.h
+    P2P_communication_thread: 
     This function initializes the P2P communication setup by creating and managing separate threads for sending and receiving messages. 
     It ensures synchronized access to shared resources using mutexes and handles thread lifecycle, including creation, execution, and cleanup.
 
-    handle_sending Function: 
+    handle_sending: 
     Responsible for sending messages to a connected peer. It captures user input from the console and sends it to the peer using the send_packet function. 
     The loop continues until an exit condition is met, ensuring continuous message sending capability.
 
-    handle_receiving Function: 
+    handle_receiving: 
     Handles incoming messages from a connected peer. It continuously listens for messages using the receive_packet function and prints received messages to the console. 
     This loop ensures that the client is always ready to display new messages.
 
     
 
-Function Descriptions:
+#### function definitions:
+##### /client/client.h
 ```c
     int init_thread_args(thread_args **_thread_args, int argc, char **argv);
         //Initializes thread_args strings from command line arguments.
@@ -64,6 +68,19 @@ Function Descriptions:
         //Addresses buffer issues and ensures fgets blocks as expected.
 ```
 
+##### /client/messaging.h
+```c
+void *      P2P_communication_thread(void * arg);
+
+void *      handle_receiving(void * arg);
+
+void *      handle_sending(void * arg);
+
+extern void clear_input_buffer();
+
+```
+
+
 ## /server
 ### General Overview
 
@@ -72,7 +89,8 @@ Function Descriptions:
     thread to handle the communication with that client, ensuring concurrent handling of multiple clients without blocking the main server process.
 
 ### Technical Overview
-#### /server/server.h
+#### function descriptions
+##### /server/server.h
     set_up_server: 
     Initializes the server's listening socket, binds it to a specified port, and prepares it to listen for incoming connections. 
     It utilizes network programming practices to handle address reuse and bind operations, ensuring the server is ready to accept client connections.
@@ -97,6 +115,8 @@ Function Descriptions:
 
 
 #### Struct Definitions:
+##### /server/server.h
+
 ```c
 typedef struct client_arr{
     client_info_packet client[128];
@@ -110,7 +130,9 @@ typedef struct server_thread_args{
 }server_thread_args;
 ```
 
-Function Descriptions:
+#### Function Definitions:
+##### /server/server.h
+
 ```c
     void init_array(clients_arr *clientsArr);
         Initializes the client array.
@@ -146,16 +168,17 @@ Function Descriptions:
 Further updates will include a comprehensive list of utilized packets as new implementations are introduced.
 
 ### Technical Overview
-
-
-##### Function Descriptions:
+#### Function Descriptions:
+##### /shared/utils.h
     send_packet and receive_packet: High-level functions responsible for sending and receiving packets, respectively.
     They utilize the n_read and n_write utility functions to ensure that the entire packet is correctly transmitted over the network.
 
     n_read and n_write: Low-level functions designed to handle partial reads/writes due to network buffering. 
     They ensure the complete sending or receiving of a packet's data by repeatedly calling recv or send until all data is transferred.
 
-##### Packet Description:
+#### Packet Description:
+##### /shared/utils.h
+
     packet_type:
         -   Defines the range of packet types utilized for client-server interactions, enabling streamlined packet processing and handling.
     
@@ -180,7 +203,9 @@ Further updates will include a comprehensive list of utilized packets as new imp
         -   The messaging system is designed around the message_packet structure, facilitating the transmission of text messages between clients.
             This system is composed of two primary components: the handle_sending and handle_receiving functions, each running in its own thread (sending_thread and receiving_thread) to manage message flow.
 
-##### Packet Definitions
+#### Packet Definitions
+##### /shared/utils.h
+
 
 ```c
     typedef enum
@@ -236,4 +261,16 @@ Further updates will include a comprehensive list of utilized packets as new imp
         int action;
     } __attribute__((packed)) action_packet;
 ```
+
+#### Function Definitions
+##### /shared/utils.h
+
+
+```c
+int    receive_packet  (int socket_client, void *buf);
+int    send_packet     (int socket_client, void *buf);
+static bool n_read     (int socket_client, ssize_t len, void * buf);
+static bool n_write    (int socket_client, ssize_t len, void * buf);
+```
+
 
