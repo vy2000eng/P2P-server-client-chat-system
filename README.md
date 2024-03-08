@@ -42,13 +42,13 @@ Function Descriptions:
        //Logs the client for later retrieval by other clients.
 
     int connect_to_server(int *server_socket, char *ip, char *port);
-        Connects to a server given the IP and port.
+        //Connects to a server given the IP and port.
 
     int initiate_P2P_connection(thread_args *_thread_args);
-        Initiates a P2P connection by requesting client information from the server.
+        //Initiates a P2P connection by requesting client information from the server.
 
     void clear_input_buffer();
-        Addresses buffer issues and ensures fgets blocks as expected.
+        //Addresses buffer issues and ensures fgets blocks as expected.
 
 ## Server
 General Overview
@@ -57,8 +57,17 @@ The server listens on a port for client connections, storing information necessa
 Technical Overview
 
     Struct Definitions:
-        typedef struct client_arr and typedef struct server_thread_args:
-            Store client information and track the number of connected clients.
+``` c
+typedef struct client_arr{
+    client_info_packet client[128];
+    int                size;
+}clients_arr;
+    
+    typedef struct server_thread_args{
+    int                  socket;
+    client_info_packet * client_info_packet_na;
+    clients_arr        * connected_clients_arr;
+    }server_thread_args;
 
     Function Descriptions:
 
