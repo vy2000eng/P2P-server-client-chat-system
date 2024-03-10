@@ -9,19 +9,21 @@
 
 void * P2P_communication_thread(void * arg)
 {
-    client_args  * _client_args;
-    int          * thread_return_value;
-    void         * receiving_thread_return_value;
-    void         * sending_thread_return_value;
-    thread_t       receiving_thread;
-    thread_t       sending_thread;
+    client_args  *  _client_args;
+    int          *  thread_return_value;
+    void         *  receiving_thread_return_value;
+    void         *  sending_thread_return_value;
+    thread_t        receiving_thread;
+    thread_t        sending_thread;
+
 
 
     mtx_lock(&communication_mutex);
     _client_args        = (client_args*)arg;
     mtx_unlock(&communication_mutex);
-
     thread_return_value = malloc(sizeof (int));
+
+
 
     if(pthread_create(&sending_thread, NULL, handle_sending, _client_args)!=0)
     {
@@ -81,6 +83,8 @@ void * handle_sending(void * arg)
     while (1)
     {
         fgets(_message_packet.message, sizeof (_message_packet.message), stdin);
+        _message_packet.message[strcspn(_message_packet.message, "\n")] = '\0';
+
         if(send_packet(*_client_args->connected_client_socket, &_message_packet) < 0)
         {
             perror("sending message failed.\n");

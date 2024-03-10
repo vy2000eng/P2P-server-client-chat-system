@@ -26,6 +26,7 @@ extern mtx_t thread_args_mutex;
 typedef struct thread_args{
     char * ip;
     char * port;
+    char * username;
     int  * listening_port;
 }thread_args;
 

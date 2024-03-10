@@ -19,6 +19,7 @@ int main(int argc, char*argv[]) {
     sem_init         (&messaging_semaphore, 0, 1);
     mtx_init         (&thread_args_mutex, mtx_plain);
     mtx_init         (&communication_mutex,mtx_plain);
+    sem_init         (&connection_semaphore, 0,1);
 
     init_thread_args (&trd_args, argc, argv);
 
@@ -61,6 +62,7 @@ int main(int argc, char*argv[]) {
 
 
     sem_destroy(&packet_semaphore);
+    sem_destroy(&connection_semaphore);
     sem_destroy(&messaging_semaphore);
     mtx_destroy(&thread_args_mutex);
     mtx_destroy(&communication_mutex);
