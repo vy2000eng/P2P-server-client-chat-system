@@ -69,6 +69,7 @@ int main(int argc, char*argv[]) {
     free(trd_args->ip);
     free(trd_args->port);
     free(trd_args->listening_port);
+    free(trd_args->username);
     free(trd_args);
     return 0;
 }

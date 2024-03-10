@@ -161,11 +161,6 @@ void * run_client_server(void * arg){
             pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
             pthread_detach(P2P_thread);
         }
-
-
-//        char client_connected_string[27] = "client connected to client";
-//        client_connected_string[26] = '\0';
-//        send(socket_client, client_connected_string, sizeof(client_connected_string)-1, 0);
     }
 
     //later there will be an exit condition which won't that is not a failure.
@@ -267,10 +262,8 @@ int establish_presence_with_server(thread_args * _thread_args)
 int initiate_P2P_connection(thread_args * _thread_args)
 {
     int                server_socket;
-    int                bytes;
     char               buf[18];
     char               port_number[6];
-    char               c_buff[27];
 
     action_packet      action_packet_outgoing;
     action_packet       action_packet_incoming;
@@ -325,34 +318,9 @@ int initiate_P2P_connection(thread_args * _thread_args)
     connect_to_server(&server_socket,client_info_packet_incoming.client_ip, port_number);
     _client_args->connected_client_socket = &server_socket;
 
-//    bytes = recv(server_socket,c_buff,sizeof (c_buff)-1, 0);
-//    c_buff[bytes] ='\0';
-//    printf("c_buff: %s \n", c_buff);
-
     strcpy        (username_packet_outgoing_to_client.user_name, _thread_args->username);
     send_packet   (server_socket, &username_packet_outgoing_to_client);
     receive_packet(server_socket,&action_packet_incoming);
-
-
-//    receive_packet(*_client_args->connected_client_socket, &username_packet_incoming);
-//
-//
-//    do{
-//        printf("accept incoming connection from: %s (y/n)?\n",username_packet_incoming.user_name );
-//        input = getchar();
-//
-//    }while(input != 'y' && input != 'Y' && input != 'n' && input != 'N');
-//
-//    action_packet_outgoing.action = input == 'y' || input == 'Y'? 1:0;
-//
-//    if(action_packet_outgoing.action == 0){
-//        *thread_return_value = -1;
-//        pthread_exit(thread_return_value);
-//    }
-//    else
-//        send_packet(*_client_args->connected_client_socket,& action_packet_outgoing);
-
-
 
     pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
     pthread_detach(P2P_thread);
