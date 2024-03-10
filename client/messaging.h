@@ -14,6 +14,7 @@
 
 extern mtx_t communication_mutex;
 extern sem_t messaging_semaphore;
+extern sem_t connection_semaphore;
 
 typedef struct client_args{
     int  * connected_client_socket;
