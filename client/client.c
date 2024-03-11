@@ -262,6 +262,7 @@ int establish_presence_with_server(thread_args * _thread_args)
 int initiate_P2P_connection(thread_args * _thread_args)
 {
     int                server_socket;
+    int                 P2P_socket;
     char               buf[18];
     char               port_number[6];
 
@@ -286,7 +287,9 @@ int initiate_P2P_connection(thread_args * _thread_args)
     username_packet_outgoing_to_server.packet_type.type    = type_username_packet;
     username_packet_outgoing_to_client .packet_type.type   = type_username_packet;
     action_packet_incoming.packet_type.type                = type_action_packet;
-    action_packet_outgoing.action                          = 1;
+    action_packet_outgoing.action                          =  1;
+    server_socket                                          = -1;
+    P2P_socket                                             = -1;
 
     int res = recv(server_socket, buf, sizeof (buf), 0);
     buf[res] = '\0'; // Ensure null-termination
@@ -315,12 +318,13 @@ int initiate_P2P_connection(thread_args * _thread_args)
 
     server_socket = -1;
 
-    connect_to_server(&server_socket,client_info_packet_incoming.client_ip, port_number);
-    _client_args->connected_client_socket = &server_socket;
+    connect_to_server(&P2P_socket,client_info_packet_incoming.client_ip, port_number);
+    _client_args->connected_client_socket = &P2P_socket;
 
     strcpy        (username_packet_outgoing_to_client.user_name, _thread_args->username);
-    send_packet   (server_socket, &username_packet_outgoing_to_client);
-    receive_packet(server_socket,&action_packet_incoming);
+    send_packet   (P2P_socket, &username_packet_outgoing_to_client);
+    receive_packet(P2P_socket,&action_packet_incoming);
+
 
     pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
     pthread_detach(P2P_thread);
