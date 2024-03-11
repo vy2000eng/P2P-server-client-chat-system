@@ -262,7 +262,7 @@ int establish_presence_with_server(thread_args * _thread_args)
 int initiate_P2P_connection(thread_args * _thread_args)
 {
     int                server_socket;
-    int                 P2P_socket;
+    int                P2P_socket;
     char               buf[18];
     char               port_number[6];
 
@@ -273,6 +273,9 @@ int initiate_P2P_connection(thread_args * _thread_args)
     username_packet    username_packet_outgoing_to_client;
     client_args     *  _client_args;
     thread_t           P2P_thread;
+
+    server_socket   = -1;
+    P2P_socket      = -1;
 
     if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0)
     {
@@ -288,8 +291,7 @@ int initiate_P2P_connection(thread_args * _thread_args)
     username_packet_outgoing_to_client .packet_type.type   = type_username_packet;
     action_packet_incoming.packet_type.type                = type_action_packet;
     action_packet_outgoing.action                          =  1;
-    server_socket                                          = -1;
-    P2P_socket                                             = -1;
+
 
     int res = recv(server_socket, buf, sizeof (buf), 0);
     buf[res] = '\0'; // Ensure null-termination
