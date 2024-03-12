@@ -17,14 +17,12 @@ int P2P_communication_thread(client_args * _client_args)
         perror("Failed to create thread");
         return -1;
     }
-    printf("waiting for sending thread to return.\n");
 
     if(pthread_create(&receiving_thread, NULL, handle_receiving, _client_args)!=0)
     {
         perror("Failed to create thread");
         return -1;
     }
-    printf("waiting for receiving thread to return.\n");
     pthread_detach(receiving_thread);
     pthread_detach(sending_thread);
 
@@ -52,7 +50,7 @@ void * handle_sending(void * arg)
         if(send_packet(*_client_args->connected_client_socket, &_message_packet) < 0)
         {
             perror("send_packet(*_client_args->connected_client_socket, &_message_packet)\n");
-            free(_client_args);
+            free  (_client_args);
             break;
         }
         printf("msg sent: %s\n", _message_packet.message);
@@ -66,12 +64,11 @@ void * handle_receiving(void * arg)
     client_args * _client_args;
     message_packet _message_packet;
 
-    mtx_lock(&communication_mutex);
+    mtx_lock       (&communication_mutex);
     _client_args = (client_args*)arg;
-    mtx_unlock(&communication_mutex);
+    mtx_unlock     (&communication_mutex);
 
-    memset(&_message_packet, 0, sizeof (message_packet));
-
+    memset                             (&_message_packet, 0, sizeof (message_packet));
     _message_packet.packet_type.type = type_message_packet;
 
     while(1)
@@ -79,7 +76,7 @@ void * handle_receiving(void * arg)
         if(receive_packet(*_client_args->connected_client_socket, &_message_packet) < 0)
         {
             perror("receive_packet(*_client_args->connected_client_socket, &_message_packet\n");
-            free(_client_args);
+            free  (_client_args);
             break;
         }
         printf("msg received: %s\n",_message_packet.message);

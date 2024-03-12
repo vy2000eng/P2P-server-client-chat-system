@@ -54,11 +54,9 @@ int main(int argc, char*argv[]) {
 
     if (client_server_thread_return_value  != NULL )
     {
-       // printf("Main Server Thread returned: %d\n", *(int*)main_server_thread_return_value);
         printf("Client server thread returned: %d\n", *(int*)client_server_thread_return_value);
 
         free(client_server_thread_return_value);
-       // free(main_server_thread_return_value);
     }
     else
     {

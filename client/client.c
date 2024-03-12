@@ -292,7 +292,7 @@ int initiate_P2P_connection(thread_args * _thread_args)
     if (init_client_args(&_client_args) < 0)
     {
         perror("client_args initialization failed.");
-    }     // freed inside P2P_communication_thread
+    }     // freed inside of sending and receiving threads
 
     // this while loop is for asking the client to accept the connection if they fail
     while(1)
@@ -311,21 +311,19 @@ int initiate_P2P_connection(thread_args * _thread_args)
             return -1;
         }
 
-        memset(&username_packet_outgoing_to_server, 0, sizeof(username_packet));
-
-
-        action_packet_outgoing.packet_type.type = type_action_packet;
-        client_info_packet_incoming.packet_type.type = type_client_info_packet;
+        memset                                                (&username_packet_outgoing_to_server, 0, sizeof(username_packet));
+        action_packet_outgoing.packet_type.type             = type_action_packet;
+        client_info_packet_incoming.packet_type.type        = type_client_info_packet;
         username_packet_outgoing_to_server.packet_type.type = type_username_packet;
         username_packet_outgoing_to_client.packet_type.type = type_username_packet;
-        action_packet_incoming.packet_type.type = type_action_packet;
+        action_packet_incoming.packet_type.type             = type_action_packet;
         //action 1 indicates that the client is retrieving a username.
         action_packet_outgoing.action = 1;
 
         // confirming the connection, I should get rid of this
-        int res = recv(server_socket, buf, sizeof(buf), 0);
+        int res  = recv(server_socket, buf, sizeof(buf), 0);
         buf[res] = '\0'; // Ensure null-termination
-        printf("%s\n", buf);
+        printf     ("%s\n", buf);
 
 
         if (send_packet(server_socket, &action_packet_outgoing) < 0)
@@ -366,7 +364,7 @@ int initiate_P2P_connection(thread_args * _thread_args)
         }
 
         _client_args->connected_client_socket = &P2P_socket;
-        strcpy(username_packet_outgoing_to_client.user_name, _thread_args->username);
+        strcpy                                  (username_packet_outgoing_to_client.user_name, _thread_args->username);
 
         if(send_packet(P2P_socket, &username_packet_outgoing_to_client) < 0)
         {
