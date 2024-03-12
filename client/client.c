@@ -121,7 +121,8 @@ void * run_client_server(void * arg){
         *_thread_args->listening_port = ntohs(sin.sin_port);
     }
     freeaddrinfo(res);
-    if(listen(listening_socket,BACKLOG ) < 0)
+
+    if(listen(listening_socket,BACKLOG) < 0)
     {
         printf("listen() failed.");
         *thread_return_value = -1;
@@ -155,7 +156,8 @@ void * run_client_server(void * arg){
         action_packet_outgoing.action = input == 'y' || input == 'Y'? 1:0;
         send_packet(socket_client,& action_packet_outgoing);
 
-        if(htonl( action_packet_outgoing.action) == 1){
+        if(htonl( action_packet_outgoing.action) == 1)
+        {
             _client_args->connected_client_socket = &socket_client;
             clear_input_buffer();
             pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
@@ -184,6 +186,7 @@ int connect_to_server(int * server_socket, char * ip ,char *  port)
         return -1;
     }
     *server_socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
     if(server_socket< 0)
     {
         printf("socket() failed.\n");
@@ -223,7 +226,8 @@ int establish_presence_with_server(thread_args * _thread_args)
     action_packet_outgoing.action              =  0;
     port_packet_outgoing.port                  =  *_thread_args->listening_port;
 
-    if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0){
+    if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0)
+    {
         perror("connect_to_server() failed.\n" );
         return -1;
     }
@@ -340,12 +344,10 @@ int initiate_P2P_connection(thread_args * _thread_args)
             return -1;
         }
 
-        sprintf(port_number, "%d", client_info_packet_incoming.port);
-        print_client_info(&client_info_packet_incoming);
-
-        close(server_socket);
-
-        server_socket = -1;
+        sprintf           (port_number, "%d", client_info_packet_incoming.port);
+        print_client_info (&client_info_packet_incoming);
+        close             (server_socket);
+        server_socket  =  -1;
 
 
         // this is for establishing connection with the client
@@ -372,8 +374,8 @@ int initiate_P2P_connection(thread_args * _thread_args)
 
         if (action_packet_incoming.action == 1)
         {
-            pthread_create(&P2P_thread, NULL, P2P_communication_thread, _client_args);
             printf("initiating connection with: %s\n",username_packet_outgoing_to_server.user_name);
+            pthread_create(&P2P_thread, NULL, P2P_communication_thread, _client_args);
             pthread_detach(P2P_thread);
             break;
         }

@@ -1,6 +1,7 @@
 #include "utils.h"
 
-int receive_packet(int socket_client, void * buf) {
+int receive_packet(int socket_client, void * buf)
+{
     base_packet header;
     n_read(socket_client, sizeof(base_packet), &header);
 
@@ -79,7 +80,8 @@ int receive_packet(int socket_client, void * buf) {
 int send_packet(SOCKET socket_client, void * buf) {
     base_packet *type = (base_packet *) buf;
 
-    switch (type->type) {
+    switch (type->type)
+    {
         case type_username_packet:
         {
             type->type               = htonl(type->type);
@@ -100,7 +102,8 @@ int send_packet(SOCKET socket_client, void * buf) {
         }
         break;
 
-        case type_connected_clients_packet: {
+        case type_connected_clients_packet:
+        {
             type->type                          = htonl(type->type);
             type->length                        = htonl(sizeof(connected_clients_packet));
             connected_clients_packet *ccpacket  = (connected_clients_packet *) buf;

@@ -59,7 +59,9 @@ int main(int argc, char*argv[]) {
 
         free(client_server_thread_return_value);
        // free(main_server_thread_return_value);
-    } else {
+    }
+    else
+    {
         printf("Thread failed to return a value or allocate memory\n");
     }
 

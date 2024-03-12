@@ -18,9 +18,9 @@ void * P2P_communication_thread(void * arg)
 
 
 
-    mtx_lock(&communication_mutex);
+    mtx_lock              (&communication_mutex);
     _client_args        = (client_args*)arg;
-    mtx_unlock(&communication_mutex);
+    mtx_unlock            (&communication_mutex);
     thread_return_value = malloc(sizeof (int));
 
 
