@@ -20,7 +20,7 @@ typedef struct client_args{
     int  * connected_client_socket;
 }client_args;
 
-void *      P2P_communication_thread(void * arg);
+int         P2P_communication_thread(client_args * _client_args);
 void *      handle_receiving(void * arg);
 void *      handle_sending(void * arg);
 extern void clear_input_buffer();
