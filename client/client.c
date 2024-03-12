@@ -85,7 +85,7 @@ void * run_client_server(void * arg){
 
     if(listening_socket < 0)
     {
-        printf("socket() failed.\n");
+        perror("socket() failed.\n");
         freeaddrinfo(res);
         *thread_return_value = -1;
         pthread_exit(thread_return_value);
@@ -143,7 +143,12 @@ void * run_client_server(void * arg){
 
         if(socket_client < 0)
         {accept_failure = -1; break;}
-        receive_packet(socket_client, &username_packet_incoming);
+        if(
+        receive_packet(socket_client, &username_packet_incoming)<0){
+            perror("receive_packet(socket_client, &username_packet_incoming).\n");
+            *thread_return_value = -1;
+            pthread_exit(thread_return_value);
+        }
 
         do
         {
@@ -160,8 +165,14 @@ void * run_client_server(void * arg){
         {
             _client_args->connected_client_socket = &socket_client;
             clear_input_buffer();
-            pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
-            pthread_detach(P2P_thread);
+
+            if(P2P_communication_thread(_client_args) < 0)
+            {
+                perror("P2P communication function failed.\n");
+                *thread_return_value = -1;
+                pthread_exit(thread_return_value);
+
+            }
         }
     }
 
@@ -278,7 +289,6 @@ int initiate_P2P_connection(thread_args * _thread_args)
     username_packet    username_packet_outgoing_to_server;
     username_packet    username_packet_outgoing_to_client;
     client_args     *  _client_args;
-    thread_t           P2P_thread;
 
     server_socket   = -1;
     P2P_socket      = -1;
@@ -287,8 +297,9 @@ int initiate_P2P_connection(thread_args * _thread_args)
         perror("client_args initialization failed.");
     }     // freed inside P2P_communication_thread
 
-
-    while(1) {
+    // this while loop is for asking the client to accept the connection if they fail
+    while(1)
+    {
         memset(&action_packet_outgoing, 0, sizeof (action_packet));
         memset(&action_packet_incoming, 0, sizeof (action_packet));
         memset(&client_info_packet_incoming, 0, sizeof (client_info_packet));
@@ -356,8 +367,8 @@ int initiate_P2P_connection(thread_args * _thread_args)
             perror("connect_to_server(&P2P_socket, client_info_packet_incoming.client_ip, port_number) failed\n");
             return -1;
         }
-        _client_args->connected_client_socket = &P2P_socket;
 
+        _client_args->connected_client_socket = &P2P_socket;
         strcpy(username_packet_outgoing_to_client.user_name, _thread_args->username);
 
         if(send_packet(P2P_socket, &username_packet_outgoing_to_client) < 0)
@@ -375,8 +386,11 @@ int initiate_P2P_connection(thread_args * _thread_args)
         if (action_packet_incoming.action == 1)
         {
             printf("initiating connection with: %s\n",username_packet_outgoing_to_server.user_name);
-            pthread_create(&P2P_thread, NULL, P2P_communication_thread, _client_args);
-            pthread_detach(P2P_thread);
+            if(P2P_communication_thread(_client_args) < 0)
+            {
+                perror("P2P communication function failed.\n");
+                return -1;
+            }
             break;
         }
         else
@@ -399,7 +413,7 @@ int initiate_P2P_connection(thread_args * _thread_args)
 
             }
         }
-    }
+    }//while(1)
 
 
     return 0;

@@ -7,47 +7,35 @@
 
 
 
-void * P2P_communication_thread(void * arg)
+int P2P_communication_thread(client_args * _client_args)
 {
-    client_args  *  _client_args;
-    int          *  thread_return_value;
     void         *  receiving_thread_return_value;
     void         *  sending_thread_return_value;
     thread_t        receiving_thread;
     thread_t        sending_thread;
 
-
-
-    mtx_lock              (&communication_mutex);
-    _client_args        = (client_args*)arg;
-    mtx_unlock            (&communication_mutex);
-    thread_return_value = malloc(sizeof (int));
-
-
-
     if(pthread_create(&sending_thread, NULL, handle_sending, _client_args)!=0)
     {
         perror("Failed to create thread");
-        *thread_return_value = -1;
-        pthread_exit(thread_return_value);
+        return -1;
     }
+
     if(pthread_create(&receiving_thread, NULL, handle_receiving, _client_args)!=0)
     {
         perror("Failed to create thread");
-        *thread_return_value = -1;
-        pthread_exit(thread_return_value);
+        return -1;
     }
 
     if(pthread_join(sending_thread, &sending_thread_return_value)!= 0 )
     {
-        *thread_return_value = -1;
-        pthread_exit(thread_return_value);
+        return -1;
     }
+
     if(pthread_join(receiving_thread, &receiving_thread_return_value)!= 0 )
     {
-        *thread_return_value = -1;
-        pthread_exit(thread_return_value);
+        return -1;
     }
+
     free(_client_args);
     if (sending_thread_return_value  != NULL || receiving_thread_return_value != NULL)
     {
@@ -56,13 +44,13 @@ void * P2P_communication_thread(void * arg)
         free  (sending_thread_return_value);
         free  (receiving_thread_return_value);
     }
+
     else
     {
         printf("Thread failed to return a value or allocate memory\n");
     }
 
-    *thread_return_value = 0;
-    pthread_exit(thread_return_value);
+    return 0;
 
 }
 
