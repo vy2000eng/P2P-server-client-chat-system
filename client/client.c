@@ -49,10 +49,8 @@ void * run_client_server(void * arg){
     struct addrinfo     *res;
     struct sockaddr     their_addr;
     struct sockaddr_in  sin;
-    thread_t            P2P_thread;
     thread_args     *   _thread_args;
     client_args     *   _client_args;
-//
     int             *   thread_return_value;
     int                 accept_failure;
     int                 listening_socket;
@@ -61,7 +59,6 @@ void * run_client_server(void * arg){
     int                 addr_len;
     int                 gai_return;
 
-   // username_packet_incoming.packet_type.type = type_username_packet;
     memset                (&hints,0 ,sizeof hints);
     init_client_args      (&_client_args);
     hints.ai_family     = AF_UNSPEC;
@@ -143,8 +140,8 @@ void * run_client_server(void * arg){
 
         if(socket_client < 0)
         {accept_failure = -1; break;}
-        if(
-        receive_packet(socket_client, &username_packet_incoming)<0){
+        if(receive_packet(socket_client, &username_packet_incoming)<0)
+        {
             perror("receive_packet(socket_client, &username_packet_incoming).\n");
             *thread_return_value = -1;
             pthread_exit(thread_return_value);

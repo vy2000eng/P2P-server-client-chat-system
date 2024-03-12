@@ -9,8 +9,6 @@
 
 int P2P_communication_thread(client_args * _client_args)
 {
-    void         *  receiving_thread_return_value;
-    void         *  sending_thread_return_value;
     thread_t        receiving_thread;
     thread_t        sending_thread;
 
@@ -19,36 +17,16 @@ int P2P_communication_thread(client_args * _client_args)
         perror("Failed to create thread");
         return -1;
     }
+    printf("waiting for sending thread to return.\n");
 
     if(pthread_create(&receiving_thread, NULL, handle_receiving, _client_args)!=0)
     {
         perror("Failed to create thread");
         return -1;
     }
-
-    if(pthread_join(sending_thread, &sending_thread_return_value)!= 0 )
-    {
-        return -1;
-    }
-
-    if(pthread_join(receiving_thread, &receiving_thread_return_value)!= 0 )
-    {
-        return -1;
-    }
-
-    free(_client_args);
-    if (sending_thread_return_value  != NULL || receiving_thread_return_value != NULL)
-    {
-        printf("sending_thread_return_value thread returned: %d\n", *(int*)sending_thread_return_value);
-        printf("receiving_thread_return_value thread returned: %d\n", *(int*)receiving_thread_return_value);
-        free  (sending_thread_return_value);
-        free  (receiving_thread_return_value);
-    }
-
-    else
-    {
-        printf("Thread failed to return a value or allocate memory\n");
-    }
+    printf("waiting for receiving thread to return.\n");
+    pthread_detach(receiving_thread);
+    pthread_detach(sending_thread);
 
     return 0;
 
@@ -58,14 +36,12 @@ void * handle_sending(void * arg)
 {
     client_args  * _client_args;
     message_packet _message_packet;
-    int          * thread_return_value;
 
     mtx_lock(&communication_mutex);
     _client_args = (client_args*)arg;
     mtx_unlock(&communication_mutex);
 
     _message_packet.packet_type.type = type_message_packet;
-    thread_return_value              = malloc(sizeof (int));
     printf("TYPE YOU MSG AND PRESS ENTER\n");
 
     while (1)
@@ -75,20 +51,20 @@ void * handle_sending(void * arg)
 
         if(send_packet(*_client_args->connected_client_socket, &_message_packet) < 0)
         {
-            perror("sending message failed.\n");
-            *thread_return_value = -1;
-            pthread_exit(thread_return_value);
+            perror("send_packet(*_client_args->connected_client_socket, &_message_packet)\n");
+            free(_client_args);
+            break;
         }
         printf("msg sent: %s\n", _message_packet.message);
         memset(&_message_packet, 0, sizeof (message_packet));
     }
+    return NULL;
 }
 
 void * handle_receiving(void * arg)
 {
     client_args * _client_args;
     message_packet _message_packet;
-    int          * thread_return_value;
 
     mtx_lock(&communication_mutex);
     _client_args = (client_args*)arg;
@@ -97,19 +73,19 @@ void * handle_receiving(void * arg)
     memset(&_message_packet, 0, sizeof (message_packet));
 
     _message_packet.packet_type.type = type_message_packet;
-    thread_return_value              = malloc(sizeof (int));
 
     while(1)
     {
         if(receive_packet(*_client_args->connected_client_socket, &_message_packet) < 0)
         {
-            perror("receiving message failed.\n");
-            *thread_return_value = -1;
-            pthread_exit(thread_return_value);
+            perror("receive_packet(*_client_args->connected_client_socket, &_message_packet\n");
+            free(_client_args);
+            break;
         }
         printf("msg received: %s\n",_message_packet.message);
         memset(&_message_packet, 0, sizeof (message_packet));
     }
+    return NULL;
 }
 
 
