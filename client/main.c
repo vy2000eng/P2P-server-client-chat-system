@@ -16,11 +16,10 @@ int main(int argc, char*argv[]) {
         return 1;
     }
     sem_init         (&packet_semaphore, 0,0);
+    sem_init         (&connection_semaphore, 0,1);
     sem_init         (&messaging_semaphore, 0, 1);
     mtx_init         (&thread_args_mutex, mtx_plain);
     mtx_init         (&communication_mutex,mtx_plain);
-    sem_init         (&connection_semaphore, 0,1);
-
     init_thread_args (&trd_args, argc, argv);
 
     if(pthread_create(&client_server_thread, NULL,run_client_server,trd_args) != 0)
@@ -40,7 +39,11 @@ int main(int argc, char*argv[]) {
 
     if(initiate_connection == 'Y' || initiate_connection == 'y')
     {
-        initiate_P2P_connection(trd_args);
+        if(initiate_P2P_connection(trd_args) < 0)
+        {
+            perror("initiating connection failed.\n");
+
+        }
     }
 
     if(pthread_join(client_server_thread, &client_server_thread_return_value)!= 0 )

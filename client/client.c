@@ -219,6 +219,7 @@ int establish_presence_with_server(thread_args * _thread_args)
     port_packet_outgoing.packet_type.type      =  type_port_packet;
     username_packet_outgoing.packet_type.type  =  type_username_packet;
     action_packet_outgoing.packet_type.type    =  type_action_packet;
+    // action 0 indicates establishing presence with the server
     action_packet_outgoing.action              =  0;
     port_packet_outgoing.port                  =  *_thread_args->listening_port;
 
@@ -245,7 +246,8 @@ int establish_presence_with_server(thread_args * _thread_args)
     username_len = strlen(username_packet_outgoing.user_name);
     _thread_args->username = malloc(username_len + 1);
 
-    if (_thread_args->username == NULL) {
+    if (_thread_args->username == NULL)
+    {
         fprintf(stderr, "Memory allocation failed\n");
         return 1; // Exit if allocation fails
     }
@@ -267,7 +269,7 @@ int initiate_P2P_connection(thread_args * _thread_args)
     char               port_number[6];
 
     action_packet      action_packet_outgoing;
-    action_packet       action_packet_incoming;
+    action_packet      action_packet_incoming;
     client_info_packet client_info_packet_incoming;
     username_packet    username_packet_outgoing_to_server;
     username_packet    username_packet_outgoing_to_client;
@@ -276,68 +278,136 @@ int initiate_P2P_connection(thread_args * _thread_args)
 
     server_socket   = -1;
     P2P_socket      = -1;
-
-    if(connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0)
+    if (init_client_args(&_client_args) < 0)
     {
-        perror("connect_to_server() failed." );
-        return -1;
+        perror("client_args initialization failed.");
+    }     // freed inside P2P_communication_thread
+
+
+    while(1) {
+        memset(&action_packet_outgoing, 0, sizeof (action_packet));
+        memset(&action_packet_incoming, 0, sizeof (action_packet));
+        memset(&client_info_packet_incoming, 0, sizeof (client_info_packet));
+        memset(&username_packet_outgoing_to_server, 0, sizeof (username_packet));
+        memset(&username_packet_outgoing_to_client, 0, sizeof (username_packet));
+
+
+        // connect to the main server
+        if (connect_to_server(&server_socket, _thread_args->ip, _thread_args->port) < 0)
+        {
+            perror("connect_to_server() failed.");
+            return -1;
+        }
+
+        memset(&username_packet_outgoing_to_server, 0, sizeof(username_packet));
+
+
+        action_packet_outgoing.packet_type.type = type_action_packet;
+        client_info_packet_incoming.packet_type.type = type_client_info_packet;
+        username_packet_outgoing_to_server.packet_type.type = type_username_packet;
+        username_packet_outgoing_to_client.packet_type.type = type_username_packet;
+        action_packet_incoming.packet_type.type = type_action_packet;
+        //action 1 indicates that the client is retrieving a username.
+        action_packet_outgoing.action = 1;
+
+        // confirming the connection, I should get rid of this
+        int res = recv(server_socket, buf, sizeof(buf), 0);
+        buf[res] = '\0'; // Ensure null-termination
+        printf("%s\n", buf);
+
+
+        if (send_packet(server_socket, &action_packet_outgoing) < 0)
+        {
+            perror("send_packet(server_socket, &action_packet_outgoing failed.\n");
+            return -1;
+        }
+
+        printf("Enter Username of Client You Want To Chat With: ");
+
+        clear_input_buffer();
+        fgets(username_packet_outgoing_to_server.user_name, sizeof(username_packet_outgoing_to_server.user_name),stdin);
+        username_packet_outgoing_to_server.user_name[strcspn(username_packet_outgoing_to_server.user_name,"\n")] = '\0';
+
+        if (send_packet(server_socket, &username_packet_outgoing_to_server) < 0)
+        {
+            perror("send_packet() failed.");
+            return -1;
+        }
+
+        if (receive_packet(server_socket, &client_info_packet_incoming) < 0)
+        {
+            perror("receive_packet(server_socket, &client_info_packet_incoming) failed.\n");
+            return -1;
+        }
+
+        sprintf(port_number, "%d", client_info_packet_incoming.port);
+        print_client_info(&client_info_packet_incoming);
+
+        close(server_socket);
+
+        server_socket = -1;
+
+
+        // this is for establishing connection with the client
+        if (connect_to_server(&P2P_socket, client_info_packet_incoming.client_ip, port_number) < 0)
+        {
+            perror("connect_to_server(&P2P_socket, client_info_packet_incoming.client_ip, port_number) failed\n");
+            return -1;
+        }
+        _client_args->connected_client_socket = &P2P_socket;
+
+        strcpy(username_packet_outgoing_to_client.user_name, _thread_args->username);
+
+        if(send_packet(P2P_socket, &username_packet_outgoing_to_client) < 0)
+        {
+            perror("send_packet(P2P_socket, &username_packet_outgoing_to_client).\n");
+            return -1;
+        }
+
+        if(receive_packet(P2P_socket, &action_packet_incoming)<0)
+        {
+            perror("send_packet(P2P_socket, &username_packet_outgoing_to_client).\n");
+            return -1;
+        }
+
+        if (action_packet_incoming.action == 1)
+        {
+            pthread_create(&P2P_thread, NULL, P2P_communication_thread, _client_args);
+            printf("initiating connection with: %s\n",username_packet_outgoing_to_server.user_name);
+            pthread_detach(P2P_thread);
+            break;
+        }
+        else
+        {
+            char input = '\0';
+            printf("The Client Refused The Connection.\n");
+            do
+            {
+                printf("try connecting again? y(yes)/q(quit): \n");
+                input = getchar();
+            }
+            while(input != 'y' && input != 'Y' &&input!= 'q' &&input!='Q');
+
+            if(input == 'y' || input == 'Y'){ continue;};
+
+            if( input == 'Q' || input== 'q')
+            {
+                free(_client_args);
+                return -1;
+
+            }
+        }
     }
 
-    memset          (&username_packet_outgoing_to_server, 0 , sizeof(username_packet));
-    init_client_args(&_client_args); // freed inside P2P_communication_thread
-    action_packet_outgoing.packet_type.type                = type_action_packet;
-    client_info_packet_incoming.packet_type.type           = type_client_info_packet;
-    username_packet_outgoing_to_server.packet_type.type    = type_username_packet;
-    username_packet_outgoing_to_client .packet_type.type   = type_username_packet;
-    action_packet_incoming.packet_type.type                = type_action_packet;
-    action_packet_outgoing.action                          =  1;
 
-
-    int res = recv(server_socket, buf, sizeof (buf), 0);
-    buf[res] = '\0'; // Ensure null-termination
-    printf("%s\n", buf);
-
-
-    if(send_packet (server_socket,&action_packet_outgoing)<0)
-    { perror       ("send_packet() failed."); return -1;}
-
-    printf         ("Enter Username of Client You Want To Chat With: ");
-
-    clear_input_buffer();
-    fgets          (username_packet_outgoing_to_server.user_name, sizeof (username_packet_outgoing_to_server.user_name), stdin);
-    username_packet_outgoing_to_server.user_name[strcspn(username_packet_outgoing_to_server.user_name, "\n")] = '\0';
-
-    if(send_packet (server_socket, &username_packet_outgoing_to_server) < 0 )
-    { perror       ("send_packet() failed."); return -1;}
-
-    if(receive_packet(server_socket, &client_info_packet_incoming) < 0)
-    { perror("receive_packet() failed."); return -1;}
-
-    sprintf(port_number, "%d",client_info_packet_incoming.port);
-    print_client_info(&client_info_packet_incoming );
-
-    close(server_socket);
-
-    server_socket = -1;
-
-    connect_to_server(&P2P_socket,client_info_packet_incoming.client_ip, port_number);
-    _client_args->connected_client_socket = &P2P_socket;
-
-    strcpy        (username_packet_outgoing_to_client.user_name, _thread_args->username);
-    send_packet   (P2P_socket, &username_packet_outgoing_to_client);
-    receive_packet(P2P_socket,&action_packet_incoming);
-
-
-    pthread_create(&P2P_thread, NULL, P2P_communication_thread,_client_args );
-    pthread_detach(P2P_thread);
     return 0;
 }
 
 void print_client_info(client_info_packet * clientInfoPacket)
 {
-    printf("client username: %s", clientInfoPacket->username );
+    printf("client username: %s\n", clientInfoPacket->username );
     printf("client ip: %s\n", clientInfoPacket->client_ip);
-    printf("client port: %d\n\n", clientInfoPacket->port);
+    printf("client port: %d\n", clientInfoPacket->port);
 }
 
 void clear_input_buffer()
