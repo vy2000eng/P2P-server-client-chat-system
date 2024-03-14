@@ -64,8 +64,8 @@ int P2P_communication_thread(client_args * _client_args)
 
 }
 void*user_input_thread(void * args){
-    while(1){
-        //printf("in ui thread");
+    while(1)
+    {
         sem_wait(&messaging_semaphore);
         mtx_lock(&communication_mutex);
         if(fgets(user_input, sizeof(user_input), stdin) != NULL) {
@@ -74,7 +74,8 @@ void*user_input_thread(void * args){
 
             // Check input and set flags or shared variables
             mtx_lock       (&termination_mutex);
-            if (strcmp     (user_input, "EXIT") == 0 || should_terminate) {
+            if (strcmp     (user_input, "EXIT") == 0 || should_terminate)
+            {
                 should_terminate = 1;
                 mtx_unlock (&termination_mutex);
                 sem_post   (&connection_semaphore) ;
@@ -105,49 +106,37 @@ void * handle_sending(void * arg)
 
     while (1)
     {
+        mtx_lock            (&termination_mutex);
+        if(should_terminate){mtx_unlock(&termination_mutex); *thread_return_value =0;  break;}
+        mtx_unlock          (&termination_mutex);
 
-
-        mtx_lock(&termination_mutex);
-        if(  should_terminate){mtx_unlock(&termination_mutex); *thread_return_value =0;  break;}
-        mtx_unlock(&termination_mutex);
-
-        sem_wait(&connection_semaphore);
-
-        mtx_lock(&_mutex);
+        sem_wait        (&connection_semaphore);
+        mtx_lock        (&_mutex);
         memcpy          (_message_packet.message, user_input, sizeof(_message_packet.message));
         memset          (user_input, 0, sizeof(user_input));
         mtx_unlock      (&_mutex);
 
-        //printf("b4 sending packet");
         if(send_packet(*_client_args->connected_client_socket, &_message_packet) < 0)
         {
-            perror("send_packet(*_client_args->connected_client_socket, &_message_packet)\n");
-
-            mtx_lock(&termination_mutex);
-            close(*_client_args->connected_client_socket);
+            perror             ("send_packet(*_client_args->connected_client_socket, &_message_packet)\n");
+            mtx_lock           (&termination_mutex);
+            close              (*_client_args->connected_client_socket);
             should_terminate = 1;
-           // *_client_args->connected_client_socket = -1;
-            mtx_unlock(&termination_mutex);
-
-
-            close(*_client_args->connected_client_socket);
-            //sem_wait(&messaging_semaphore);
+            mtx_unlock         (&termination_mutex);
+            close              (*_client_args->connected_client_socket);
             *thread_return_value = -1;
             break;
         }
-        //sem_wait(&messaging_semaphore);
-
-        printf("msg sent: %s\n", _message_packet.message);
-        memset(&_message_packet, 0, sizeof (message_packet));
+        printf  ("msg sent: %s\n", _message_packet.message);
+        memset  (&_message_packet, 0, sizeof (message_packet));
         sem_post(&messaging_semaphore);
     }
-    //printf("break in receiving.\n");
     pthread_exit(thread_return_value);
 }
 
 void * handle_receiving(void * arg)
 {
-    client_args * _client_args;
+    client_args  * _client_args;
     message_packet _message_packet;
     int          * thread_return_value;
 
@@ -161,45 +150,35 @@ void * handle_receiving(void * arg)
 
     while(1)
     {
+        mtx_lock                (&termination_mutex);
+        if(should_terminate)    {mtx_unlock(&termination_mutex); *thread_return_value =0; break;}
+        mtx_unlock              (&termination_mutex);
 
-        mtx_lock(&termination_mutex);
-        if(  should_terminate){mtx_unlock(&termination_mutex); *thread_return_value =0; break;}
-        mtx_unlock(&termination_mutex);
-
-        //  sem_wait(&messaging_semaphore);
         int n =receive_packet(*_client_args->connected_client_socket, &_message_packet);
         if(n<=0)
         {
-            if(n == -1){
-                printf("the client disconnected");
-                mtx_lock(&termination_mutex);
-                close(*_client_args->connected_client_socket);
-                //*_client_args->connected_client_socket = -1;
-                should_terminate = 1;
-                mtx_unlock(&termination_mutex);
-                //  sem_post(&messaging_semaphore);
+            if(n == -1)
+            {
+                printf              ("the client disconnected");
+                mtx_lock            (&termination_mutex);
+                close               (*_client_args->connected_client_socket);
+                should_terminate  = 1;
+                mtx_unlock          (&termination_mutex);
                 *thread_return_value = -1;
                 break;
-
             }
-          //  printf("after perre");
-            perror("receive_packet(*_client_args->connected_client_socket, &_message_packet\n");
-           // sem_wait(&messaging_semaphore);
-            mtx_lock(&termination_mutex);
-            close(*_client_args->connected_client_socket);
-            //*_client_args->connected_client_socket = -1;
+            perror             ("receive_packet(*_client_args->connected_client_socket, &_message_packet\n");
+            mtx_lock           (&termination_mutex);
+            close              (*_client_args->connected_client_socket);
             should_terminate = 1;
-            mtx_unlock(&termination_mutex);
-          //  sem_post(&messaging_semaphore);
+            mtx_unlock         (&termination_mutex);
             *thread_return_value = -1;
             break;
         }
         sem_post(&messaging_semaphore);
-       // sem_wait(&messaging_semaphore);
-        printf("msg received: %s\n",_message_packet.message);
-        memset(&_message_packet, 0, sizeof (message_packet));
+        printf  ("msg received: %s\n",_message_packet.message);
+        memset  (&_message_packet, 0, sizeof (message_packet));
     }
-   // printf("exiting the thread");
     pthread_exit(thread_return_value);
 }
 
