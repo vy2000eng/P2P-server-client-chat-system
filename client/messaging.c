@@ -90,9 +90,10 @@ void*user_input_thread(void * arg){
             mtx_lock       (&termination_mutex);
             if (strcmp     (user_input, "EXIT") == 0 || should_terminate)
             {
+                printf("the client terminated the connection\n");
 
                 should_terminate = 1;
-                close(*_client_args->connected_client_socket);
+               // close(*_client_args->connected_client_socket);
                 mtx_unlock (&termination_mutex);
                 sem_post   (&connection_semaphore) ;
                 break;
@@ -177,6 +178,9 @@ void * handle_receiving(void * arg)
 
     while(1)
     {
+
+
+        int n =receive_packet(*_client_args->connected_client_socket, &_message_packet);
         mtx_lock                (&termination_mutex);
         if (strcmp     (user_input, "EXIT") == 0 || should_terminate)
         {
@@ -188,8 +192,6 @@ void * handle_receiving(void * arg)
         }
         //if(should_terminate)    {mtx_unlock(&termination_mutex); *thread_return_value =0; break;}
         mtx_unlock              (&termination_mutex);
-
-        int n =receive_packet(*_client_args->connected_client_socket, &_message_packet);
         if(n<=0)
         {
             if(n == -1)
