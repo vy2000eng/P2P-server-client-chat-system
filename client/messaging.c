@@ -45,7 +45,7 @@ int P2P_communication_thread(client_args * _client_args)
         return_value = -1;
         // return -1;
     }
-    printf("on the outside of the thread");
+    printf("on the outside of the thread recv");
 
     if(pthread_join(sending_thread, &sending_thread_return_value)!= 0 )
     {
@@ -54,6 +54,8 @@ int P2P_communication_thread(client_args * _client_args)
         return_value = -1;
         //return -1;
     }
+    printf("on the outside of the thread send");
+
 
 
     free(_client_args);
@@ -65,7 +67,7 @@ int P2P_communication_thread(client_args * _client_args)
 }
 void*user_input_thread(void * args){
     while(1){
-        printf("in ui thread");
+        //printf("in ui thread");
         sem_wait(&messaging_semaphore);
         mtx_lock(&communication_mutex);
         if(fgets(user_input, sizeof(user_input), stdin) != NULL) {
@@ -74,7 +76,7 @@ void*user_input_thread(void * args){
 
             // Check input and set flags or shared variables
             mtx_lock       (&termination_mutex);
-            if (strcmp     (user_input, "EXIT") == 0) {
+            if (strcmp     (user_input, "EXIT") == 0 || should_terminate) {
                 should_terminate = 1;
                 mtx_unlock (&termination_mutex);
                 sem_post   (&connection_semaphore) ;
@@ -108,7 +110,7 @@ void * handle_sending(void * arg)
 
 
         mtx_lock(&termination_mutex);
-        if(  *_client_args->connected_client_socket == -1){mtx_unlock(&termination_mutex);break;}
+        if(  should_terminate){mtx_unlock(&termination_mutex); *thread_return_value =0;  break;}
         mtx_unlock(&termination_mutex);
 
         sem_wait(&connection_semaphore);
@@ -118,14 +120,15 @@ void * handle_sending(void * arg)
         memset          (user_input, 0, sizeof(user_input));
         mtx_unlock      (&_mutex);
 
-        printf("b4 sending packet");
+        //printf("b4 sending packet");
         if(send_packet(*_client_args->connected_client_socket, &_message_packet) < 0)
         {
             perror("send_packet(*_client_args->connected_client_socket, &_message_packet)\n");
 
             mtx_lock(&termination_mutex);
             close(*_client_args->connected_client_socket);
-            *_client_args->connected_client_socket = -1;
+            should_terminate = 1;
+           // *_client_args->connected_client_socket = -1;
             mtx_unlock(&termination_mutex);
 
 
@@ -140,7 +143,7 @@ void * handle_sending(void * arg)
         memset(&_message_packet, 0, sizeof (message_packet));
         sem_post(&messaging_semaphore);
     }
-    printf("break in receiving.\n");
+    //printf("break in receiving.\n");
     pthread_exit(thread_return_value);
 }
 
@@ -161,16 +164,20 @@ void * handle_receiving(void * arg)
     while(1)
     {
 
-      //  sem_wait(&messaging_semaphore);
+        mtx_lock(&termination_mutex);
+        if(  should_terminate){mtx_unlock(&termination_mutex); *thread_return_value =0; break;}
+        mtx_unlock(&termination_mutex);
+
+        //  sem_wait(&messaging_semaphore);
         if(receive_packet(*_client_args->connected_client_socket, &_message_packet)< 0)
         {
-            printf("after perre");
+          //  printf("after perre");
             perror("receive_packet(*_client_args->connected_client_socket, &_message_packet\n");
            // sem_wait(&messaging_semaphore);
             mtx_lock(&termination_mutex);
             close(*_client_args->connected_client_socket);
-            *_client_args->connected_client_socket = -1;
-            should_terminate = -1;
+            //*_client_args->connected_client_socket = -1;
+            should_terminate = 1;
             mtx_unlock(&termination_mutex);
           //  sem_post(&messaging_semaphore);
             *thread_return_value = -1;
@@ -181,7 +188,7 @@ void * handle_receiving(void * arg)
         printf("msg received: %s\n",_message_packet.message);
         memset(&_message_packet, 0, sizeof (message_packet));
     }
-    printf("exiting the thread");
+   // printf("exiting the thread");
     pthread_exit(thread_return_value);
 }
 
