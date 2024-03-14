@@ -159,6 +159,10 @@ static bool n_read(int fd, ssize_t len, void *buf) {
     int n;
     while(total < len){                                  // reads data from fd, which is actually cli_sd
         n = recv(fd, buf + total, bytes_left,0);// with every iteration increments the spot to start reading from in the buf
+        if(n == 0){
+            printf("the client terminated the connection\n");
+            break;
+        }
         if(n <= 0)                                       // if there's an error than breaks out of loop
             break;
         total += n;

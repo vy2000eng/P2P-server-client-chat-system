@@ -1,10 +1,14 @@
 #include "client.h"
 
 mtx_t communication_mutex;
+mtx_t termination_mutex;
 sem_t packet_semaphore;
 sem_t messaging_semaphore;
 mtx_t thread_args_mutex;
+mtx_t _mutex;
 sem_t connection_semaphore;
+char user_input[256];
+int should_terminate;
 
 
 int init_thread_args(thread_args ** _thread_args,int argc, char ** argv)
@@ -174,6 +178,7 @@ void * run_client_server(void * arg){
     }
 
     //later there will be an exit condition which won't that is not a failure.
+    printf("run client server ended.\n");
     *thread_return_value = accept_failure == -1? -1:0;
     pthread_exit(thread_return_value);
 }
