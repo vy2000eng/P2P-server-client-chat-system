@@ -25,19 +25,17 @@ int P2P_communication_thread(client_args * _client_args)
     }
     pthread_detach(u_i_thread);
 
-
-
     if(pthread_create(&receiving_thread, NULL, handle_receiving, _client_args)!=0)
     {
         perror("Failed to create thread");
         return -1;
     }
+
     if(pthread_create(&sending_thread, NULL, handle_sending, _client_args)!=0)
     {
         perror("Failed to create thread");
         return -1;
     }
-
 
     if(pthread_join(receiving_thread, &receiving_thread_return_value)!= 0 )
     {
@@ -169,8 +167,21 @@ void * handle_receiving(void * arg)
         mtx_unlock(&termination_mutex);
 
         //  sem_wait(&messaging_semaphore);
-        if(receive_packet(*_client_args->connected_client_socket, &_message_packet)< 0)
+        int n =receive_packet(*_client_args->connected_client_socket, &_message_packet);
+        if(n<=0)
         {
+            if(n == -1){
+                printf("the client disconnected");
+                mtx_lock(&termination_mutex);
+                close(*_client_args->connected_client_socket);
+                //*_client_args->connected_client_socket = -1;
+                should_terminate = 1;
+                mtx_unlock(&termination_mutex);
+                //  sem_post(&messaging_semaphore);
+                *thread_return_value = -1;
+                break;
+
+            }
           //  printf("after perre");
             perror("receive_packet(*_client_args->connected_client_socket, &_message_packet\n");
            // sem_wait(&messaging_semaphore);

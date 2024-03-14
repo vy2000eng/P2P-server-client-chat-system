@@ -70,8 +70,8 @@ typedef struct action{
 
 int    receive_packet  (int socket_client, void *buf);
 int    send_packet     (int socket_client, void *buf);
-static bool n_read     (int socket_client, ssize_t len, void * buf);
-static bool n_write    (int socket_client, ssize_t len, void * buf);
+static int n_read     (int socket_client, ssize_t len, void * buf);
+static int n_write    (int socket_client, ssize_t len, void * buf);
 
 
 
