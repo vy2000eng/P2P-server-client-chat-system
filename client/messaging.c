@@ -6,15 +6,12 @@
 
 int P2P_communication_thread(client_args * _client_args, int initiating_or_accepting)
 {
-//    thread_t        receiving_thread;
-//    thread_t        sending_thread;
     thread_t        thread_arr[2];
     thread_t        u_i_thread;
     void         *  receiving_thread_return_value;
     void         *  sending_thread_return_value;
-    int             return_value;
 
-    return_value = 0;
+    start_threads(_client_args,  initiating_or_accepting,thread_arr);
 
     if(pthread_create(&u_i_thread, NULL, user_input_thread, NULL)!=0)
     {
@@ -22,50 +19,30 @@ int P2P_communication_thread(client_args * _client_args, int initiating_or_accep
         return -1;
     }
     pthread_detach(u_i_thread);
-    start_threads(_client_args,  initiating_or_accepting,thread_arr);
-//
-//    if(pthread_create(&receiving_thread, NULL, handle_receiving, _client_args)!=0)
-//    {
-//        perror("Failed to create thread");
-//        return -1;
-//    }
-//
-//    if(pthread_create(&sending_thread, NULL, handle_sending, _client_args)!=0)
-//    {
-//        perror("Failed to create thread");
-//        return -1;
-//    }
-//
-//    if(pthread_join(receiving_thread, &receiving_thread_return_value)!= 0 )
-//    {
-//        printf("rec joined\n");
-//        return_value = -1;
-//        // return -1;
-//    }
-//    printf("on the outside of the thread recv");
-//
-//    if(pthread_join(sending_thread, &sending_thread_return_value)!= 0 )
-//    {
-//        printf("send joined\n");
-//
-//        return_value = -1;
-//        //return -1;
-//    }
+
+    if(pthread_join(thread_arr[1], &receiving_thread_return_value)!= 0 )
+    {
+        printf("rec joined\n");
+        return -1;
+    }
+    printf("on the outside of the thread recv");
+
+    if(pthread_join(thread_arr[0], &sending_thread_return_value)!= 0 )
+    {
+        printf("send joined\n");
+        return -1;
+    }
     printf("on the outside of the thread send");
-
     free(_client_args);
-
-    return return_value == -1? -1:0;
+    return 0;
 
 }
-int start_threads(client_args * _client_args, int initiating_or_accepting,thread_t *thread_arr){
-    void         *  receiving_thread_return_value;
-    void         *  sending_thread_return_value;
-    int             return_value;
 
-    return_value = 0;
+int start_threads(client_args * _client_args, int initiating_or_accepting,thread_t *thread_arr)
+{
 
-    if(initiating_or_accepting){
+    if(!initiating_or_accepting)
+    {
         if(pthread_create(&thread_arr[0], NULL, handle_receiving, _client_args)!=0)
         {
             perror("Failed to create thread");
@@ -77,23 +54,6 @@ int start_threads(client_args * _client_args, int initiating_or_accepting,thread
             perror("Failed to create thread");
             return -1;
         }
-
-        if(pthread_join(thread_arr[0], &receiving_thread_return_value)!= 0 )
-        {
-            printf("rec joined\n");
-            return_value = -1;
-            // return -1;
-        }
-        printf("on the outside of the thread recv");
-
-        if(pthread_join(thread_arr[1], &sending_thread_return_value)!= 0 )
-        {
-            printf("send joined\n");
-
-            return_value = -1;
-            //return -1;
-        }
-
     }
     else
     {
@@ -108,29 +68,12 @@ int start_threads(client_args * _client_args, int initiating_or_accepting,thread
             perror("Failed to create thread");
             return -1;
         }
-
-        if(pthread_join(thread_arr[1], &receiving_thread_return_value)!= 0 )
-        {
-            printf("rec joined\n");
-            return_value = -1;
-            // return -1;
-        }
-        printf("on the outside of the thread recv");
-
-        if(pthread_join(thread_arr[0], &sending_thread_return_value)!= 0 )
-        {
-            printf("send joined\n");
-
-            return_value = -1;
-            //return -1;
-        }
-
     }
-   // return_value = 0;
-    return return_value;
+    return 0;
 
 }
 void*user_input_thread(void * args){
+    printf("TYPE YOU MSG AND PRESS ENTER\n");
     while(1)
     {
         sem_wait(&messaging_semaphore);
@@ -138,7 +81,6 @@ void*user_input_thread(void * args){
         if(fgets(user_input, sizeof(user_input), stdin) != NULL) {
             user_input[strcspn(user_input, "\n")] = 0;
             mtx_unlock        (&communication_mutex);
-
             // Check input and set flags or shared variables
             mtx_lock       (&termination_mutex);
             if (strcmp     (user_input, "EXIT") == 0 || should_terminate)
@@ -169,7 +111,6 @@ void * handle_sending(void * arg)
 
     thread_return_value              = malloc(sizeof (int));
     _message_packet.packet_type.type = type_message_packet;
-    printf("TYPE YOU MSG AND PRESS ENTER\n");
 
     while (1)
     {
