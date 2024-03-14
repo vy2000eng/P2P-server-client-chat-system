@@ -167,7 +167,7 @@ void * run_client_server(void * arg){
             _client_args->connected_client_socket = &socket_client;
             clear_input_buffer();
 
-            if(P2P_communication_thread(_client_args) < 0)
+            if(P2P_communication_thread(_client_args, 0) < 0)
             {
                 perror("P2P communication function failed.\n");
                 *thread_return_value = -1;
@@ -386,7 +386,7 @@ int initiate_P2P_connection(thread_args * _thread_args)
         if (action_packet_incoming.action == 1)
         {
             printf("initiating connection with: %s\n",username_packet_outgoing_to_server.user_name);
-            if(P2P_communication_thread(_client_args) < 0)
+            if(P2P_communication_thread(_client_args,1) < 0)
             {
                 perror("P2P communication function failed.\n");
                 return -1;

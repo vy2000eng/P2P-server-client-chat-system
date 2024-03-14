@@ -28,7 +28,8 @@ typedef struct client_args{
 
 extern char user_input[256];
 
-int         P2P_communication_thread(client_args * _client_args);
+int         P2P_communication_thread(client_args * _client_args, int initiating_or_accepting);
+int         start_threads(client_args * _client_args,int initiating_or_accepting, thread_t * thread_arr );
 void *      handle_receiving(void * arg);
 void *      handle_sending(void * arg);
 void *      user_input_thread(void * args);
