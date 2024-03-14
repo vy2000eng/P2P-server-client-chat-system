@@ -13,7 +13,7 @@ int P2P_communication_thread(client_args * _client_args, int initiating_or_accep
 
     start_threads(_client_args,  initiating_or_accepting,thread_arr);
 
-    if(pthread_create(&u_i_thread, NULL, user_input_thread, NULL)!=0)
+    if(pthread_create(&u_i_thread, NULL, user_input_thread, _client_args)!=0)
     {
         perror("Failed to create thread");
         return -1;
@@ -72,7 +72,12 @@ int start_threads(client_args * _client_args, int initiating_or_accepting,thread
     return 0;
 
 }
-void*user_input_thread(void * args){
+void*user_input_thread(void * arg){
+    client_args  * _client_args;
+    mtx_lock(&communication_mutex);
+    _client_args = (client_args*)arg;
+    mtx_unlock(&communication_mutex);
+
     printf("TYPE YOU MSG AND PRESS ENTER\n");
     while(1)
     {
@@ -85,7 +90,9 @@ void*user_input_thread(void * args){
             mtx_lock       (&termination_mutex);
             if (strcmp     (user_input, "EXIT") == 0 || should_terminate)
             {
+
                 should_terminate = 1;
+                close(*_client_args->connected_client_socket);
                 mtx_unlock (&termination_mutex);
                 sem_post   (&connection_semaphore) ;
                 break;
@@ -114,11 +121,23 @@ void * handle_sending(void * arg)
 
     while (1)
     {
-        mtx_lock            (&termination_mutex);
-        if(should_terminate){mtx_unlock(&termination_mutex); *thread_return_value =0;  break;}
-        mtx_unlock          (&termination_mutex);
 
         sem_wait        (&connection_semaphore);
+
+        mtx_lock            (&termination_mutex);
+        if (strcmp     (user_input, "EXIT") == 0 || should_terminate)
+        {
+            close(*_client_args->connected_client_socket);
+            should_terminate = 1;
+            printf("client terminated the connection via 'EXIT' cmd\n");
+            mtx_unlock          (&termination_mutex);
+            break;
+        }
+
+        // if(should_terminate){mtx_unlock(&termination_mutex); *thread_return_value =0;  break;}
+        mtx_unlock          (&termination_mutex);
+
+
         mtx_lock        (&_mutex);
         memcpy          (_message_packet.message, user_input, sizeof(_message_packet.message));
         memset          (user_input, 0, sizeof(user_input));
@@ -159,7 +178,15 @@ void * handle_receiving(void * arg)
     while(1)
     {
         mtx_lock                (&termination_mutex);
-        if(should_terminate)    {mtx_unlock(&termination_mutex); *thread_return_value =0; break;}
+        if (strcmp     (user_input, "EXIT") == 0 || should_terminate)
+        {
+            close(*_client_args->connected_client_socket);
+            should_terminate = 1;
+            printf("client terminated the connection via 'EXIT' cmd\n");
+            mtx_unlock          (&termination_mutex);
+            break;
+        }
+        //if(should_terminate)    {mtx_unlock(&termination_mutex); *thread_return_value =0; break;}
         mtx_unlock              (&termination_mutex);
 
         int n =receive_packet(*_client_args->connected_client_socket, &_message_packet);
@@ -175,6 +202,7 @@ void * handle_receiving(void * arg)
                 *thread_return_value = -1;
                 break;
             }
+
             perror             ("receive_packet(*_client_args->connected_client_socket, &_message_packet\n");
             mtx_lock           (&termination_mutex);
             close              (*_client_args->connected_client_socket);
@@ -182,6 +210,16 @@ void * handle_receiving(void * arg)
             mtx_unlock         (&termination_mutex);
             *thread_return_value = -1;
             break;
+        }
+        if (strcmp     (_message_packet.message, "EXIT") == 0)
+        {
+            printf              ("the client disconnected via EXIT cmd");
+            mtx_lock            (&termination_mutex);
+            close               (*_client_args->connected_client_socket);
+            should_terminate  = 1;
+            mtx_unlock          (&termination_mutex);
+            break;
+
         }
         sem_post(&messaging_semaphore);
         printf  ("msg received: %s\n",_message_packet.message);
