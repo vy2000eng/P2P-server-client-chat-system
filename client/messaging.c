@@ -90,9 +90,9 @@ void*user_input_thread(void * arg){
             mtx_lock       (&termination_mutex);
             if (strcmp     (user_input, "EXIT") == 0 || should_terminate)
             {
-                printf("the client terminated the connection\n");
+                printf("Terminating connection.\n");
 
-                should_terminate = 1;
+             //   should_terminate = 1;
                // close(*_client_args->connected_client_socket);
                 mtx_unlock (&termination_mutex);
                 sem_post   (&connection_semaphore) ;
@@ -126,11 +126,11 @@ void * handle_sending(void * arg)
         sem_wait        (&connection_semaphore);
 
         mtx_lock            (&termination_mutex);
-        if (strcmp     (user_input, "EXIT") == 0 || should_terminate)
+        if (strcmp     (_message_packet.message, "EXIT") == 0 || should_terminate)
         {
             close(*_client_args->connected_client_socket);
             should_terminate = 1;
-            printf("client terminated the connection via 'EXIT' cmd\n");
+            printf("The connection was terminated via: 'EXIT' cmd\n");
             mtx_unlock          (&termination_mutex);
             break;
         }
@@ -140,7 +140,8 @@ void * handle_sending(void * arg)
 
 
         mtx_lock        (&_mutex);
-        memcpy          (_message_packet.message, user_input, sizeof(_message_packet.message));
+        memset          (&_message_packet, 0, sizeof (message_packet));//reset the msg packet
+        memcpy          (_message_packet.message, user_input, sizeof(_message_packet.message));//copy user input into
         memset          (user_input, 0, sizeof(user_input));
         mtx_unlock      (&_mutex);
 
@@ -156,7 +157,7 @@ void * handle_sending(void * arg)
             break;
         }
         printf  ("msg sent: %s\n", _message_packet.message);
-        memset  (&_message_packet, 0, sizeof (message_packet));
+       // memset  (&_message_packet, 0, sizeof (message_packet));
         sem_post(&messaging_semaphore);
     }
     pthread_exit(thread_return_value);
@@ -182,14 +183,14 @@ void * handle_receiving(void * arg)
 
         int n =receive_packet(*_client_args->connected_client_socket, &_message_packet);
         mtx_lock                (&termination_mutex);
-        if (strcmp     (user_input, "EXIT") == 0 || should_terminate)
-        {
-            close(*_client_args->connected_client_socket);
-            should_terminate = 1;
-            printf("client terminated the connection via 'EXIT' cmd\n");
-            mtx_unlock          (&termination_mutex);
-            break;
-        }
+//        if (strcmp     (user_input, "EXIT") == 0 || should_terminate)
+//        {
+//            close(*_client_args->connected_client_socket);
+//            should_terminate = 1;
+//            printf("client terminated the connection via 'EXIT' cmd\n");
+//            mtx_unlock          (&termination_mutex);
+//            break;
+//        }
         //if(should_terminate)    {mtx_unlock(&termination_mutex); *thread_return_value =0; break;}
         mtx_unlock              (&termination_mutex);
         if(n<=0)
