@@ -1,11 +1,11 @@
 #include "client.h"
 
-mtx_t communication_mutex;
-mtx_t termination_mutex;
+pthread_mutex_t communication_mutex;
+pthread_mutex_t termination_mutex;
 sem_t packet_semaphore;
 sem_t messaging_semaphore;
 mtx_t thread_args_mutex;
-mtx_t _mutex;
+//pthread_mutex_t _mutex;
 sem_t connection_semaphore;
 char user_input[256];
 int should_terminate;
@@ -361,7 +361,7 @@ int initiate_P2P_connection(thread_args * _thread_args)
         server_socket  =  -1;
 
 
-        // this is for establishing connection with the client
+        // this is for establishing connection with the client i.e P2P socket
         if (connect_to_server(&P2P_socket, client_info_packet_incoming.client_ip, port_number) < 0)
         {
             perror("connect_to_server(&P2P_socket, client_info_packet_incoming.client_ip, port_number) failed\n");
@@ -370,6 +370,7 @@ int initiate_P2P_connection(thread_args * _thread_args)
 
         _client_args->connected_client_socket = &P2P_socket;
         strcpy                                  (username_packet_outgoing_to_client.user_name, _thread_args->username);
+        printf                                  ("...waiting for client to accept the connection...\n");
 
         if(send_packet(P2P_socket, &username_packet_outgoing_to_client) < 0)
         {

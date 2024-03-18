@@ -17,11 +17,12 @@
 #include <stdio.h>
 #include <limits.h> // For INT_MAX and INT_MIN
 #include <threads.h>
+
 #include "semaphore.h"
 #include "messaging.h"
 
 extern sem_t packet_semaphore;
-extern mtx_t thread_args_mutex;
+//extern mtx_t thread_args_mutex;
 
 typedef struct thread_args{
     char * ip;

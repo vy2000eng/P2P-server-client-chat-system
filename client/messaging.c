@@ -6,8 +6,8 @@
 
 int P2P_communication_thread(client_args * _client_args, int initiating_or_accepting)
 {
-    thread_t        thread_arr[2];
-    thread_t        u_i_thread;
+    pthread_t       thread_arr[2];
+    pthread_t       u_i_thread;
     void         *  receiving_thread_return_value;
     void         *  sending_thread_return_value;
 
@@ -38,7 +38,7 @@ int P2P_communication_thread(client_args * _client_args, int initiating_or_accep
 
 }
 
-int start_threads(client_args * _client_args, int initiating_or_accepting,thread_t *thread_arr)
+int start_threads(client_args * _client_args, int initiating_or_accepting,pthread_t *thread_arr)
 {
 
     if(!initiating_or_accepting)
@@ -73,33 +73,34 @@ int start_threads(client_args * _client_args, int initiating_or_accepting,thread
 
 }
 void*user_input_thread(void * arg){
-    client_args  * _client_args;
-    mtx_lock(&communication_mutex);
-    _client_args = (client_args*)arg;
-    mtx_unlock(&communication_mutex);
+//    client_args  * _client_args;
+//    pthread_mutex_lock(&communication_mutex);
+//    _client_args = (client_args*)arg;
+//    pthread_mutex_unlock(&communication_mutex);
 
     printf("TYPE YOU MSG AND PRESS ENTER\n");
     while(1)
     {
         sem_wait(&messaging_semaphore);
-        mtx_lock(&communication_mutex);
+       // pthread_mutex_lock(&communication_mutex);
+       // clear_input_buffer();
         if(fgets(user_input, sizeof(user_input), stdin) != NULL) {
             user_input[strcspn(user_input, "\n")] = 0;
-            mtx_unlock        (&communication_mutex);
+         //   pthread_mutex_unlock        (&communication_mutex);
             // Check input and set flags or shared variables
-            mtx_lock       (&termination_mutex);
+            pthread_mutex_lock       (&termination_mutex);
             if (strcmp     (user_input, "EXIT") == 0 || should_terminate)
             {
                 printf("Terminating connection.\n");
 
              //   should_terminate = 1;
                // close(*_client_args->connected_client_socket);
-                mtx_unlock (&termination_mutex);
+                pthread_mutex_unlock (&termination_mutex);
                 sem_post   (&connection_semaphore) ;
                 break;
 
             }
-            mtx_unlock(&termination_mutex);
+            pthread_mutex_unlock(&termination_mutex);
             sem_post  (&connection_semaphore);
         }
     }
@@ -113,9 +114,9 @@ void * handle_sending(void * arg)
     message_packet _message_packet;
     int          * thread_return_value;
 
-    mtx_lock(&communication_mutex);
+    pthread_mutex_lock(&communication_mutex);
     _client_args = (client_args*)arg;
-    mtx_unlock(&communication_mutex);
+    pthread_mutex_unlock(&communication_mutex);
 
     thread_return_value              = malloc(sizeof (int));
     _message_packet.packet_type.type = type_message_packet;
@@ -123,41 +124,40 @@ void * handle_sending(void * arg)
     while (1)
     {
 
-        sem_wait        (&connection_semaphore);
 
-        mtx_lock            (&termination_mutex);
-        if (strcmp     (_message_packet.message, "EXIT") == 0 || should_terminate)
+        pthread_mutex_lock  (&termination_mutex);
+        if (strcmp(_message_packet.message, "EXIT") == 0 || should_terminate)
         {
-            close(*_client_args->connected_client_socket);
+            close       (*_client_args->connected_client_socket);
             should_terminate = 1;
-            printf("The connection was terminated via: 'EXIT' cmd\n");
-            mtx_unlock          (&termination_mutex);
+            printf      ("The connection was terminated via: 'EXIT' cmd\n");
+            pthread_mutex_unlock  (&termination_mutex);
             break;
         }
+        pthread_mutex_unlock(&termination_mutex);
 
-        // if(should_terminate){mtx_unlock(&termination_mutex); *thread_return_value =0;  break;}
-        mtx_unlock          (&termination_mutex);
+        sem_wait  (&connection_semaphore);
 
 
-        mtx_lock        (&_mutex);
         memset          (&_message_packet, 0, sizeof (message_packet));//reset the msg packet
-        memcpy          (_message_packet.message, user_input, sizeof(_message_packet.message));//copy user input into
+        ///pthread_mutex_lock        (&_mutex);
+        memcpy          (_message_packet.message, user_input, sizeof(_message_packet.message));//copy user input into _message_packet
         memset          (user_input, 0, sizeof(user_input));
-        mtx_unlock      (&_mutex);
+        //pthread_mutex_unlock(     &_mutex);
+
 
         if(send_packet(*_client_args->connected_client_socket, &_message_packet) < 0)
         {
             perror             ("send_packet(*_client_args->connected_client_socket, &_message_packet)\n");
-            mtx_lock           (&termination_mutex);
+            pthread_mutex_lock           (&termination_mutex);
             close              (*_client_args->connected_client_socket);
             should_terminate = 1;
-            mtx_unlock         (&termination_mutex);
-            close              (*_client_args->connected_client_socket);
+            pthread_mutex_unlock         (&termination_mutex);
+           // close              (*_client_args->connected_client_socket);
             *thread_return_value = -1;
             break;
         }
         printf  ("msg sent: %s\n", _message_packet.message);
-       // memset  (&_message_packet, 0, sizeof (message_packet));
         sem_post(&messaging_semaphore);
     }
     pthread_exit(thread_return_value);
@@ -169,9 +169,9 @@ void * handle_receiving(void * arg)
     message_packet _message_packet;
     int          * thread_return_value;
 
-    mtx_lock       (&communication_mutex);
+    pthread_mutex_lock       (&communication_mutex);
     _client_args = (client_args*)arg;
-    mtx_unlock     (&communication_mutex);
+    pthread_mutex_unlock     (&communication_mutex);
 
     memset                             (&_message_packet, 0, sizeof (message_packet));
     thread_return_value              = malloc(sizeof (int));
@@ -179,52 +179,38 @@ void * handle_receiving(void * arg)
 
     while(1)
     {
-
-
         int n =receive_packet(*_client_args->connected_client_socket, &_message_packet);
-        mtx_lock                (&termination_mutex);
-//        if (strcmp     (user_input, "EXIT") == 0 || should_terminate)
-//        {
-//            close(*_client_args->connected_client_socket);
-//            should_terminate = 1;
-//            printf("client terminated the connection via 'EXIT' cmd\n");
-//            mtx_unlock          (&termination_mutex);
-//            break;
-//        }
-        //if(should_terminate)    {mtx_unlock(&termination_mutex); *thread_return_value =0; break;}
-        mtx_unlock              (&termination_mutex);
-        if(n<=0)
+        if(n == -1)
         {
-            if(n == -1)
-            {
-                printf              ("the client disconnected");
-                mtx_lock            (&termination_mutex);
-                close               (*_client_args->connected_client_socket);
-                should_terminate  = 1;
-                mtx_unlock          (&termination_mutex);
-                *thread_return_value = -1;
-                break;
-            }
-
+            printf              ("the client disconnected");
+            pthread_mutex_lock            (&termination_mutex);
+            close               (*_client_args->connected_client_socket);
+            should_terminate  = 1;
+            pthread_mutex_unlock          (&termination_mutex);
+            *thread_return_value = -1;
+            break;
+        }
+        if(n == 0)
+        {
             perror             ("receive_packet(*_client_args->connected_client_socket, &_message_packet\n");
-            mtx_lock           (&termination_mutex);
+            pthread_mutex_lock           (&termination_mutex);
             close              (*_client_args->connected_client_socket);
             should_terminate = 1;
-            mtx_unlock         (&termination_mutex);
+            pthread_mutex_unlock         (&termination_mutex);
             *thread_return_value = -1;
             break;
         }
         if (strcmp     (_message_packet.message, "EXIT") == 0)
         {
             printf              ("the client disconnected via EXIT cmd");
-            mtx_lock            (&termination_mutex);
+            pthread_mutex_lock            (&termination_mutex);
             close               (*_client_args->connected_client_socket);
             should_terminate  = 1;
-            mtx_unlock          (&termination_mutex);
+            pthread_mutex_unlock          (&termination_mutex);
             break;
 
         }
-        sem_post(&messaging_semaphore);
+        //sem_post(&messaging_semaphore);
         printf  ("msg received: %s\n",_message_packet.message);
         memset  (&_message_packet, 0, sizeof (message_packet));
     }

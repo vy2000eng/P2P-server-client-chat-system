@@ -7,14 +7,14 @@
 
 
 #include "../shared/utils.h"
-#include "thread_db.h"
-#include "threads.h"
+//#include "thread_db.h"
+#include "pthread.h"
 #include "semaphore.h"
 
 
-extern mtx_t communication_mutex;
-extern mtx_t termination_mutex;
-extern mtx_t _mutex;
+extern pthread_mutex_t communication_mutex;
+extern pthread_mutex_t termination_mutex;
+///xtern pthread_mutex_t _mutex;
 
 extern sem_t messaging_semaphore;
 extern sem_t connection_semaphore;
@@ -29,7 +29,7 @@ typedef struct client_args{
 extern char user_input[256];
 
 int         P2P_communication_thread(client_args * _client_args, int initiating_or_accepting);
-int         start_threads(client_args * _client_args,int initiating_or_accepting, thread_t * thread_arr );
+int         start_threads(client_args * _client_args,int initiating_or_accepting, pthread_t * thread_arr );
 void *      handle_receiving(void * arg);
 void *      handle_sending(void * arg);
 void *      user_input_thread(void * args);
