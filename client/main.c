@@ -41,22 +41,27 @@ int main(int argc, char*argv[]) {
     {
         printf("Initiate Connection With Another Client? (Y(Initiate Connection)/N(Listen For Connection)):");
         initiate_connection = getchar();
-
-
-        if(initiate_connection == 'Y' || initiate_connection == 'y')
-        {
-            if(initiate_P2P_connection(trd_args) < 0)
-            {
-                perror("initiating connection failed.\n");
-
-            }
-        }
     }
     while(initiate_connection != 'Y' && initiate_connection !='y' && initiate_connection != 'N' && initiate_connection!='n');
 
 
+    if(initiate_connection == 'Y' || initiate_connection == 'y')
+    {
+        if(initiate_P2P_connection(trd_args) < 0)
+        {
+            perror("initiating connection failed.\n");
+
+        }
+    }
+
     printf("after i_P2P_c\n");
     printf("after i_P2P_c\n");
+
+    if(initiate_connection == 'y'){
+
+        shutdown(*trd_args->client_server_listening_socket, SHUT_RDWR);
+
+    }
 
 
     if(pthread_join(client_server_thread, &client_server_thread_return_value)!= 0 )

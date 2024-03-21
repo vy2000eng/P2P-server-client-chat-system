@@ -26,10 +26,13 @@ int init_thread_args(thread_args ** _thread_args,int argc, char ** argv)
     (*_thread_args)   -> ip              = (char *) malloc(len_of_argv_1+1);
     (*_thread_args)   -> port            = (char *) malloc(len_of_argv_2+1);
     (*_thread_args)   ->listening_port   = (int  *) malloc(sizeof(int));
-    (*_thread_args)   ->username         = NULL; // this null ptr is cuz we don't know the size, we'll allocate memory for this later;
-    if((*_thread_args)->ip   == NULL  ||
-       (*_thread_args)->port == NULL  ||
-       (*_thread_args)->listening_port == NULL)
+    (*_thread_args)   ->client_server_listening_socket   = (int  *) malloc(sizeof(int));
+
+    (*_thread_args)   ->username   = NULL; // this null ptr is cuz we don't know the size, we'll allocate memory for this later;
+    if((*_thread_args)->ip                             == NULL||
+       (*_thread_args)->port                           == NULL||
+       (*_thread_args)->client_server_listening_socket == NULL||
+       (*_thread_args)->listening_port                 == NULL)
     {printf("Failed to allocate memory.\n"); return -1;};
 
     strcpy((*_thread_args)->ip,argv[1]);
@@ -130,6 +133,7 @@ void * run_client_server(void * arg){
         *thread_return_value = -1;
         pthread_exit(thread_return_value);
     }
+    *_thread_args->client_server_listening_socket = listening_socket;
     sem_post(&packet_semaphore);
 
     while(1)
@@ -143,8 +147,27 @@ void * run_client_server(void * arg){
         action_packet_outgoing.packet_type.type   = type_action_packet;
         socket_client                             = accept(listening_socket, (struct sockaddr*)&their_addr, (socklen_t*) &addr_len);
 
+
         if(socket_client < 0)
-        {accept_failure = -1; break;}
+        {
+            if (errno == EBADF || errno == EINVAL) { // Check specific error codes as needed
+                // Handle shutdown case
+               //
+               //*thread_return_value = 0; // Or appropriate clean-up code
+                printf("exiting because main thread shut down listening\n");
+               accept_failure = 0;
+               free(_client_args);
+               break;
+               // pthread_exit(thread_return_value);
+            }else{
+                accept_failure = -1;
+                free(_client_args);
+                break;
+
+            }
+          //  accept_failure = -1;
+           // break;
+        }
         if(receive_packet(socket_client, &username_packet_incoming)<0)
         {
             perror("receive_packet(socket_client, &username_packet_incoming).\n");
