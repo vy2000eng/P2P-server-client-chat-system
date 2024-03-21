@@ -150,23 +150,19 @@ void * run_client_server(void * arg){
 
         if(socket_client < 0)
         {
-            if (errno == EBADF || errno == EINVAL) { // Check specific error codes as needed
-                // Handle shutdown case
-               //
-               //*thread_return_value = 0; // Or appropriate clean-up code
+            if (errno == EBADF || errno == EINVAL)
+            { // Check specific error codes as needed
                 printf("exiting because main thread shut down listening\n");
                accept_failure = 0;
                free(_client_args);
                break;
-               // pthread_exit(thread_return_value);
-            }else{
+            }
+            else
+            {
                 accept_failure = -1;
                 free(_client_args);
                 break;
-
             }
-          //  accept_failure = -1;
-           // break;
         }
         if(receive_packet(socket_client, &username_packet_incoming)<0)
         {
@@ -174,7 +170,6 @@ void * run_client_server(void * arg){
             *thread_return_value = -1;
             pthread_exit(thread_return_value);
         }
-
         do
         {
             printf("accept incoming connection from: %s (y/n)?\n",username_packet_incoming.user_name );
@@ -196,7 +191,6 @@ void * run_client_server(void * arg){
                 perror("P2P communication function failed.\n");
                 *thread_return_value = -1;
                 return thread_return_value;
-               // pthread_exit(thread_return_value);
             }
             do
             {
@@ -205,9 +199,6 @@ void * run_client_server(void * arg){
             }
             while(exit != 'y' && exit != 'Y' && exit != 'q' && exit != 'Q');
             if(exit == 'Q' || exit == 'q'){break;};
-
-
-
         }
     }
 
@@ -215,7 +206,6 @@ void * run_client_server(void * arg){
     printf("run client server ended.\n");
     *thread_return_value = accept_failure == -1? -1:0;
     return thread_return_value;
-    //pthread_exit(thread_return_value);
 }
 
 int connect_to_server(int * server_socket, char * ip ,char *  port)
