@@ -9,6 +9,10 @@ int main(int argc, char*argv[]) {
     void        * client_server_thread_return_value;
     thread_args * trd_args = NULL;
     char          initiate_connection;
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
+    // char
 
     if (argc < 3)
     {
@@ -37,18 +41,23 @@ int main(int argc, char*argv[]) {
     {
         printf("Initiate Connection With Another Client? (Y(Initiate Connection)/N(Listen For Connection)):");
         initiate_connection = getchar();
+
+
+        if(initiate_connection == 'Y' || initiate_connection == 'y')
+        {
+            if(initiate_P2P_connection(trd_args) < 0)
+            {
+                perror("initiating connection failed.\n");
+
+            }
+        }
     }
     while(initiate_connection != 'Y' && initiate_connection !='y' && initiate_connection != 'N' && initiate_connection!='n');
 
-    if(initiate_connection == 'Y' || initiate_connection == 'y')
-    {
-        if(initiate_P2P_connection(trd_args) < 0)
-        {
-            perror("initiating connection failed.\n");
 
-        }
-    }
     printf("after i_P2P_c\n");
+    printf("after i_P2P_c\n");
+
 
     if(pthread_join(client_server_thread, &client_server_thread_return_value)!= 0 )
     {

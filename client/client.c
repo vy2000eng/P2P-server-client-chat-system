@@ -62,6 +62,7 @@ void * run_client_server(void * arg){
     int                 enable;
     int                 addr_len;
     int                 gai_return;
+    char                exit;
 
     memset                (&hints,0 ,sizeof hints);
     init_client_args      (&_client_args);
@@ -171,16 +172,27 @@ void * run_client_server(void * arg){
             {
                 perror("P2P communication function failed.\n");
                 *thread_return_value = -1;
-                pthread_exit(thread_return_value);
-
+                return thread_return_value;
+               // pthread_exit(thread_return_value);
             }
+            do
+            {
+                printf("continue listening (y(continue)/q(quit) ?  ");
+                exit = getchar();
+            }
+            while(exit != 'y' && exit != 'Y' && exit != 'q' && exit != 'Q');
+            if(exit == 'Q' || exit == 'q'){break;};
+
+
+
         }
     }
 
     //later there will be an exit condition which won't that is not a failure.
     printf("run client server ended.\n");
     *thread_return_value = accept_failure == -1? -1:0;
-    pthread_exit(thread_return_value);
+    return thread_return_value;
+    //pthread_exit(thread_return_value);
 }
 
 int connect_to_server(int * server_socket, char * ip ,char *  port)
@@ -415,6 +427,7 @@ int initiate_P2P_connection(thread_args * _thread_args)
             }
         }
     }//while(1)
+    free(_client_args);
 
 
     return 0;
