@@ -34,6 +34,7 @@ int P2P_communication_thread(client_args * _client_args, int initiating_or_accep
     }
     printf("on the outside of the thread send\n");
     _client_args->connected_client_socket = NULL;
+    should_terminate = 0;
     return 0;
 
 }
@@ -135,7 +136,6 @@ void * handle_sending(void * arg)
         memset              (user_input, 0, sizeof(user_input));
         pthread_mutex_unlock(&communication_mutex);
 
-
         if(send_packet(*_client_args->connected_client_socket, &_message_packet) < 0)
         {
             perror                  ("send_packet(*_client_args->connected_client_socket, &_message_packet)\n");
@@ -150,6 +150,8 @@ void * handle_sending(void * arg)
         //this semaphore is signalling to the user_input_thread
         sem_post(&messaging_semaphore);
     }
+    memset(&_message_packet, 0, sizeof (message_packet));
+
     return thread_return_value;
 }
 
@@ -213,6 +215,7 @@ void * handle_receiving(void * arg)
         printf  ("msg received: %s\n",_message_packet.message);
         memset  (&_message_packet, 0, sizeof (message_packet));
     }
+    memset(&_message_packet, 0, sizeof (message_packet));
     return thread_return_value;
 }
 

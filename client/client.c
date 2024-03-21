@@ -141,6 +141,9 @@ void * run_client_server(void * arg){
         char                input;
         username_packet     username_packet_incoming;
         action_packet       action_packet_outgoing;
+        memset(&username_packet_incoming, 0, sizeof (username_packet));
+        memset(&action_packet_outgoing, 0, sizeof (action_packet));
+        memset(&input, 0, sizeof (char ));
 
         input                                     = -1;
         username_packet_incoming.packet_type.type = type_username_packet;
@@ -199,6 +202,7 @@ void * run_client_server(void * arg){
             }
             while(exit != 'y' && exit != 'Y' && exit != 'q' && exit != 'Q');
             if(exit == 'Q' || exit == 'q'){break;};
+
         }
     }
 

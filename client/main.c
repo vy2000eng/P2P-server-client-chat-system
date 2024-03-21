@@ -52,6 +52,9 @@ int main(int argc, char*argv[]) {
             perror("initiating connection failed.\n");
 
         }
+    }else{
+        printf("...listening for connections incoming...\n");
+
     }
 
     printf("after i_P2P_c\n");
