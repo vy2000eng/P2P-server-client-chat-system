@@ -133,6 +133,7 @@ void * run_client_server(void * arg){
         *thread_return_value = -1;
         pthread_exit(thread_return_value);
     }
+    printf("...listening for incoming connections...\n");
     *_thread_args->client_server_listening_socket = listening_socket;
     sem_post(&packet_semaphore);
 
@@ -345,7 +346,7 @@ int initiate_P2P_connection(thread_args * _thread_args)
             return -1;
         }
 
-        memset                                                (&username_packet_outgoing_to_server, 0, sizeof(username_packet));
+        //memset                                                (&username_packet_outgoing_to_server, 0, sizeof(username_packet));
         action_packet_outgoing.packet_type.type             = type_action_packet;
         client_info_packet_incoming.packet_type.type        = type_client_info_packet;
         username_packet_outgoing_to_server.packet_type.type = type_username_packet;
