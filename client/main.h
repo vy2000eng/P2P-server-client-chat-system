@@ -5,6 +5,9 @@
 #include "client.h"
 #include "greeting.h"
 
+int     driver(int argc, char*argv[]);
+
+
 
 
 
